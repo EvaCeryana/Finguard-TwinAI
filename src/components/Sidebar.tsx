@@ -1,28 +1,63 @@
 import { NavLink } from "react-router-dom";
-import {
-  Shield,
-  Plus,
-  LayoutDashboard,
-  Clock,
-  BookOpen,
-  Activity,
-} from "lucide-react";
+import { BarChart3, BookOpen, History, Home, PlayCircle, ShieldCheck } from "lucide-react";
+import { useLanguage, type AppLanguage } from "../context/LanguageContext";
+
+const LABELS: Record<AppLanguage, Record<string, string>> = {
+  en: {
+    workspace: "Workspace",
+    home: "Home",
+    simulate: "New Simulation",
+    dashboard: "Dashboard",
+    history: "History",
+    method: "Framework",
+    status: "Demo Environment",
+  },
+  zh: {
+    workspace: "工作区",
+    home: "首页",
+    simulate: "新模拟",
+    dashboard: "仪表盘",
+    history: "历史记录",
+    method: "方法框架",
+    status: "演示环境",
+  },
+  id: {
+    workspace: "Workspace",
+    home: "Beranda",
+    simulate: "Simulasi Baru",
+    dashboard: "Dashboard",
+    history: "Riwayat",
+    method: "Kerangka",
+    status: "Lingkungan Demo",
+  },
+  ms: {
+    workspace: "Workspace",
+    home: "Laman Utama",
+    simulate: "Simulasi Baharu",
+    dashboard: "Dashboard",
+    history: "Sejarah",
+    method: "Rangka Kerja",
+    status: "Persekitaran Demo",
+  },
+};
 
 const NAV_ITEMS = [
-  { to: "/",          label: "Overview",       icon: LayoutDashboard, end: true },
-  { to: "/simulate",  label: "New Simulation",  icon: Plus },
-  { to: "/dashboard", label: "Risk Dashboard",  icon: Activity },
-  { to: "/history",   label: "History",         icon: Clock },
-  { to: "/method",    label: "Framework",       icon: BookOpen },
+  { to: "/", key: "home", icon: Home, end: true },
+  { to: "/simulate", key: "simulate", icon: PlayCircle },
+  { to: "/dashboard", key: "dashboard", icon: BarChart3 },
+  { to: "/history", key: "history", icon: History },
+  { to: "/method", key: "method", icon: BookOpen },
 ];
 
 export function Sidebar() {
+  const { language } = useLanguage();
+  const labels = LABELS[language];
+
   return (
     <aside className="sidebar">
-      {/* Brand — Task 3 fix: "TWIN AI" → "Twin AI" */}
       <div className="sidebar-brand">
         <div className="brand-icon">
-          <Shield size={18} />
+          <ShieldCheck size={17} />
         </div>
         <div className="brand-text">
           <span className="brand-name">FinGuard</span>
@@ -30,27 +65,25 @@ export function Sidebar() {
         </div>
       </div>
 
-      <p className="nav-section-label">WORKSPACE</p>
+      <p className="nav-section-label">{labels.workspace}</p>
 
-      <nav className="sidebar-nav">
-        {NAV_ITEMS.map(({ to, label, icon: Icon, end }) => (
+      <nav className="sidebar-nav" aria-label="Main navigation">
+        {NAV_ITEMS.map(({ to, key, icon: Icon, end }) => (
           <NavLink
             key={to}
             to={to}
             end={end}
-            className={({ isActive }) =>
-              `nav-item ${isActive ? "nav-item--active" : ""}`
-            }
+            className={({ isActive }) => `nav-item ${isActive ? "nav-item--active" : ""}`}
           >
-            <Icon size={16} className="nav-icon" />
-            <span>{label}</span>
+            <Icon size={15} className="nav-icon" />
+            {labels[key]}
           </NavLink>
         ))}
       </nav>
 
       <div className="sidebar-footer">
-        <div className="status-dot status-dot--online" />
-        <span className="status-text">Engine Ready</span>
+        <span className="status-dot status-dot--online" />
+        <span className="status-text">{labels.status}</span>
       </div>
     </aside>
   );
