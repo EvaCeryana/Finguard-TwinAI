@@ -35,3 +35,8 @@ FinGuard Twin AI provides a pre-launch testing environment. Users input a propos
 ```bash
    git clone <repository-url>
    cd finguard-twin-ai
+(for the local one, only can use our fallback-engine)
+
+## How to Run Online
+I use vercel to make the app run online "https://finguard-twin-71q41nfwk-eva-s-projects17.vercel.app/" this is the online link and can use both AI and fallback engine
+
