@@ -503,7 +503,7 @@ function replaceCommonTerms(text: string, language: AppLanguage) {
   const terms = PHRASE_TRANSLATIONS[language];
   let output = text;
   Object.entries(terms).forEach(([from, to]) => {
-    output = output.replaceAll(from, to);
+    output = output.split(from).join(to);
   });
   return output;
 }
