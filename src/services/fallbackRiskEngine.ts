@@ -43,9 +43,12 @@ function hasAny(text: string, keywords: string[]): boolean {
 
 function uniqueBy<T>(items: T[], getKey: (item: T) => string): T[] {
   const seen = new Set<string>();
+
   return items.filter((item) => {
     const key = getKey(item);
+
     if (seen.has(key)) return false;
+
     seen.add(key);
     return true;
   });
@@ -159,19 +162,18 @@ function detectSignals(input: SimulationInput): RiskSignals {
       "passwordless",
     ]);
 
-  const withdrawal =
-    hasAny(text, [
-      "withdrawal",
-      "withdraw",
-      "cash out",
-      "cash-out",
-      "payout",
-      "bank transfer out",
-      "withdraw limit",
-      "withdrawal limit",
-      "instant payout",
-      "wallet to bank",
-    ]);
+  const withdrawal = hasAny(text, [
+    "withdrawal",
+    "withdraw",
+    "cash out",
+    "cash-out",
+    "payout",
+    "bank transfer out",
+    "withdraw limit",
+    "withdrawal limit",
+    "instant payout",
+    "wallet to bank",
+  ]);
 
   const merchantOnboarding =
     input.decisionType === "Merchant Onboarding Policy" ||
@@ -627,10 +629,13 @@ function buildRiskMatrix(signals: RiskSignals): RiskMatrixEntry[] {
 
   if (risks.length === 0) risks = genericRisks();
 
-  const uniqueRisks = uniqueBy(risks, (risk) => `${risk.category}-${risk.riskName}`);
+  const uniqueRisks = uniqueBy(
+    risks,
+    (risk) => `${risk.category}-${risk.riskName}`
+  );
 
-  // Ensure all 6 categories exist so Gemini/fallback output stays dashboard-safe.
   const categories = new Set(uniqueRisks.map((risk) => risk.category));
+
   const fallbackByCategory: Record<RiskCategory, RiskMatrixEntry> = {
     fraud: genericRisks()[0],
     compliance: genericRisks()[1],
@@ -651,13 +656,15 @@ function buildRiskMatrix(signals: RiskSignals): RiskMatrixEntry[] {
 
 // ─── Content Builders ──────────────────────────────────────────────────────
 
-function buildDecisionSummary(input: SimulationInput, signals: RiskSignals): string {
+function buildDecisionSummary(signals: RiskSignals): string {
   const topics: string[] = [];
 
   if (signals.transferLimit) topics.push("higher transfer exposure");
   if (signals.loanAutomation) topics.push("automated credit decisioning");
   if (signals.scamBlocking) topics.push("transaction blocking logic");
-  if (signals.kycReduction) topics.push("weaker identity or authentication controls");
+  if (signals.kycReduction) {
+    topics.push("weaker identity or authentication controls");
+  }
   if (signals.withdrawal) topics.push("faster withdrawal or cash-out movement");
   if (signals.merchantOnboarding) topics.push("merchant onboarding exposure");
 
@@ -665,7 +672,9 @@ function buildDecisionSummary(input: SimulationInput, signals: RiskSignals): str
     return "The proposed fintech decision changes user, transaction, or platform risk exposure before launch. It should be tested against fraud, compliance, false positive, user harm, operational, and reputation risks before rollout.";
   }
 
-  return `The proposed decision introduces ${topics.join(", ")} before the platform has fully proven the related controls. This creates pre-launch exposure across fraud, compliance, user harm, operational workload, and customer trust.`;
+  return `The proposed decision introduces ${topics.join(
+    ", "
+  )} before the platform has fully proven the related controls. This creates pre-launch exposure across fraud, compliance, user harm, operational workload, and customer trust.`;
 }
 
 function buildMainConcern(signals: RiskSignals): string {
@@ -741,7 +750,7 @@ function buildStakeholders(signals: RiskSignals): AffectedStakeholder[] {
     });
   }
 
-  return uniqueBy(stakeholders, (s) => s.role);
+  return uniqueBy(stakeholders, (stakeholder) => stakeholder.role);
 }
 
 function buildAbuseScenarios(signals: RiskSignals): AbuseScenario[] {
@@ -830,10 +839,12 @@ function buildAbuseScenarios(signals: RiskSignals): AbuseScenario[] {
     );
   }
 
-  return uniqueBy(scenarios, (s) => s.id).slice(0, 4);
+  return uniqueBy(scenarios, (scenario) => scenario.id).slice(0, 4);
 }
 
-function buildFalsePositiveScenarios(signals: RiskSignals): FalsePositiveScenario[] {
+function buildFalsePositiveScenarios(
+  signals: RiskSignals
+): FalsePositiveScenario[] {
   const scenarios: FalsePositiveScenario[] = [];
 
   if (signals.transferLimit || signals.withdrawal) {
@@ -889,8 +900,7 @@ function buildFalsePositiveScenarios(signals: RiskSignals): FalsePositiveScenari
       {
         id: "fp-general-01",
         affectedSegment: "Legitimate users with unusual but valid behaviour",
-        trigger:
-          "New rules classify uncommon but valid behaviour as suspicious.",
+        trigger: "New rules classify uncommon but valid behaviour as suspicious.",
         userImpact:
           "Users may face unnecessary friction, delays, or additional verification.",
         severity: "medium",
@@ -898,22 +908,25 @@ function buildFalsePositiveScenarios(signals: RiskSignals): FalsePositiveScenari
       {
         id: "fp-general-02",
         affectedSegment: "Small business or high-activity users",
-        trigger:
-          "Higher activity volume is misread as fraud or policy abuse.",
-        userImpact:
-          "Important transactions or approvals may be delayed.",
+        trigger: "Higher activity volume is misread as fraud or policy abuse.",
+        userImpact: "Important transactions or approvals may be delayed.",
         severity: "medium",
       }
     );
   }
 
-  return uniqueBy(scenarios, (s) => s.id).slice(0, 4);
+  return uniqueBy(scenarios, (scenario) => scenario.id).slice(0, 4);
 }
 
 function buildComplianceConcerns(signals: RiskSignals): ComplianceConcern[] {
   const concerns: ComplianceConcern[] = [];
 
-  if (signals.malaysiaContext || signals.transferLimit || signals.withdrawal || signals.kycReduction) {
+  if (
+    signals.malaysiaContext ||
+    signals.transferLimit ||
+    signals.withdrawal ||
+    signals.kycReduction
+  ) {
     concerns.push({
       id: "cc-bnm-aml-01",
       regulation: "BNM AML/CFT Risk-Based Approach",
@@ -971,7 +984,7 @@ function buildComplianceConcerns(signals: RiskSignals): ComplianceConcern[] {
     severity: "medium",
   });
 
-  return uniqueBy(concerns, (c) => c.id).slice(0, 4);
+  return uniqueBy(concerns, (concern) => concern.id).slice(0, 4);
 }
 
 function buildOperationalRisks(signals: RiskSignals): string[] {
@@ -998,7 +1011,7 @@ function buildOperationalRisks(signals: RiskSignals): string[] {
     risks.push("Chargeback, settlement dispute, and merchant investigation workloads may increase.");
   }
 
-  return uniqueBy(risks, (r) => r).slice(0, 5);
+  return uniqueBy(risks, (risk) => risk).slice(0, 5);
 }
 
 function buildReputationRisks(signals: RiskSignals): string[] {
@@ -1023,7 +1036,7 @@ function buildReputationRisks(signals: RiskSignals): string[] {
     risks.push("Association with scam merchants can damage platform credibility with both users and regulators.");
   }
 
-  return uniqueBy(risks, (r) => r).slice(0, 5);
+  return uniqueBy(risks, (risk) => risk).slice(0, 5);
 }
 
 function buildControlPlan(signals: RiskSignals): ControlAction[] {
@@ -1063,6 +1076,7 @@ function buildControlPlan(signals: RiskSignals): ControlAction[] {
       owner: "Product & Risk",
       priority: "immediate",
     });
+
     controls.push({
       id: "cp-money-02",
       control:
@@ -1093,6 +1107,7 @@ function buildControlPlan(signals: RiskSignals): ControlAction[] {
       owner: "Credit Risk",
       priority: "immediate",
     });
+
     controls.push({
       id: "cp-loan-02",
       control:
@@ -1134,10 +1149,12 @@ function buildControlPlan(signals: RiskSignals): ControlAction[] {
     priority: "short_term",
   });
 
-  return uniqueBy(controls, (c) => c.id).slice(0, 7);
+  return uniqueBy(controls, (control) => control.id).slice(0, 7);
 }
 
-function buildSaferAlternative(signals: RiskSignals): RiskAssessment["saferAlternative"] {
+function buildSaferAlternative(
+  signals: RiskSignals
+): RiskAssessment["saferAlternative"] {
   if (signals.transferLimit || signals.withdrawal) {
     return {
       title: "Progressive Trust and Risk-Based Limit Model",
@@ -1237,7 +1254,7 @@ function buildAssessment(input: SimulationInput): RiskAssessment {
     id: createId("fallback"),
     createdAt: new Date().toISOString(),
     decisionInput: input.decisionText,
-    decisionSummary: buildDecisionSummary(input, signals),
+    decisionSummary: buildDecisionSummary(signals),
     overallRiskScore: displayScore,
     overallRiskLevel,
     internalRiskScore,
