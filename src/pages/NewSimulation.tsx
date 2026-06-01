@@ -4,8 +4,7 @@ import { ChevronDown, Info } from "lucide-react";
 import { PageHeader } from "../components/PageHeader";
 import { runRiskSimulation } from "../services/simulationService";
 import type { DecisionType, CompanyType, SimulationInput } from "../types/risk";
-
-// ─── Constants ──────────────────────────────────────────────────────────────
+import { useLanguage } from "../context/LanguageContext";
 
 const DECISION_TYPES: DecisionType[] = [
   "Transfer Limit Change",
@@ -30,25 +29,23 @@ const COMPANY_TYPES: CompanyType[] = [
   "Other Fintech",
 ];
 
-// Required order: main demo scenario first
 const DEMO_DECISIONS = [
   "Increase instant transfer limit for newly registered users from RM500 to RM5,000.",
   "Use AI to automatically approve small personal loans without manual review.",
   "Automatically block transactions that look similar to scam payments.",
 ];
 
-const LOADING_MESSAGES = [
-  "Building risk simulation...",
-  "Mapping fraud scenarios...",
-  "Estimating false positive impact...",
-  "Generating control plan...",
-  "Preparing safer alternative...",
+const LOADING_KEYS = [
+  "buildingRiskSimulation",
+  "mappingFraudScenarios",
+  "estimatingFalsePositive",
+  "generatingControlPlan",
+  "preparingSaferAlternative",
 ];
-
-// ─── Component ──────────────────────────────────────────────────────────────
 
 export function NewSimulation() {
   const navigate = useNavigate();
+  const { t, tx } = useLanguage();
 
   const [form, setForm] = useState({
     decisionText: "",
@@ -62,18 +59,15 @@ export function NewSimulation() {
   const [loadingStep, setLoadingStep] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
-  // Cycle through loading messages while simulation runs
   useEffect(() => {
     if (!isRunning) return;
     const interval = setInterval(() => {
-      setLoadingStep((prev) => (prev + 1) % LOADING_MESSAGES.length);
+      setLoadingStep((prev) => (prev + 1) % LOADING_KEYS.length);
     }, 600);
     return () => clearInterval(interval);
   }, [isRunning]);
 
-  function handleChange(
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
-  ) {
+  function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) {
     setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
     if (error) setError(null);
   }
@@ -102,7 +96,7 @@ export function NewSimulation() {
       await runRiskSimulation(input);
       navigate("/dashboard");
     } catch (err) {
-      setError("Simulation failed. Please try again.");
+      setError(t("simulationFailed"));
       setIsRunning(false);
     }
   }
@@ -112,71 +106,50 @@ export function NewSimulation() {
   return (
     <div className="page-simulate">
       <PageHeader
-        badge="New Simulation"
-        title="Define the Decision"
-        subtitle="Describe the fintech policy or product change you want to stress-test."
+        badge={t("newSimulation")}
+        title={t("defineDecision")}
+        subtitle={t("defineDecisionSubtitle")}
       />
 
-      {/* Demo scenario chips */}
       <div className="example-prompts">
         <span className="example-label">
-          <Info size={12} /> Demo scenarios
+          <Info size={12} /> {t("demoScenarios")}
         </span>
         <div className="example-chips">
           {DEMO_DECISIONS.map((ex) => (
-            <button
-              key={ex}
-              className="example-chip"
-              onClick={() => fillDemo(ex)}
-              disabled={isRunning}
-            >
-              {ex}
+            <button key={ex} className="example-chip" onClick={() => fillDemo(ex)} disabled={isRunning}>
+              {tx(ex)}
             </button>
           ))}
         </div>
       </div>
 
       <form className="sim-form" onSubmit={handleSubmit}>
-        {/* Primary: decision text */}
         <div className="form-field form-field--primary">
           <label className="form-label" htmlFor="decisionText">
-            Decision Description <span className="form-required">*</span>
+            {t("decisionDescription")} <span className="form-required">*</span>
           </label>
           <textarea
             id="decisionText"
             name="decisionText"
             className="form-textarea"
             rows={5}
-            placeholder="Describe the specific policy, rule, or product change you want to simulate..."
+            placeholder={t("decisionPlaceholder")}
             value={form.decisionText}
             onChange={handleChange}
             disabled={isRunning}
           />
-          <span className="form-hint">
-            Be specific — include current state, proposed state, and affected user segment if known.
-          </span>
+          <span className="form-hint">{t("decisionHint")}</span>
         </div>
 
-        {/* Decision type + company type */}
         <div className="form-row">
           <div className="form-field">
-            <label className="form-label" htmlFor="decisionType">
-              Decision Type
-            </label>
+            <label className="form-label" htmlFor="decisionType">{t("decisionType")}</label>
             <div className="select-wrapper">
-              <select
-                id="decisionType"
-                name="decisionType"
-                className="form-select"
-                value={form.decisionType}
-                onChange={handleChange}
-                disabled={isRunning}
-              >
-                <option value="">Select type...</option>
-                {DECISION_TYPES.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
+              <select id="decisionType" name="decisionType" className="form-select" value={form.decisionType} onChange={handleChange} disabled={isRunning}>
+                <option value="">{t("selectType")}</option>
+                {DECISION_TYPES.map((type) => (
+                  <option key={type} value={type}>{tx(type)}</option>
                 ))}
               </select>
               <ChevronDown size={14} className="select-icon" />
@@ -184,23 +157,12 @@ export function NewSimulation() {
           </div>
 
           <div className="form-field">
-            <label className="form-label" htmlFor="companyType">
-              Company Type
-            </label>
+            <label className="form-label" htmlFor="companyType">{t("companyType")}</label>
             <div className="select-wrapper">
-              <select
-                id="companyType"
-                name="companyType"
-                className="form-select"
-                value={form.companyType}
-                onChange={handleChange}
-                disabled={isRunning}
-              >
-                <option value="">Select type...</option>
-                {COMPANY_TYPES.map((t) => (
-                  <option key={t} value={t}>
-                    {t}
-                  </option>
+              <select id="companyType" name="companyType" className="form-select" value={form.companyType} onChange={handleChange} disabled={isRunning}>
+                <option value="">{t("selectType")}</option>
+                {COMPANY_TYPES.map((type) => (
+                  <option key={type} value={type}>{tx(type)}</option>
                 ))}
               </select>
               <ChevronDown size={14} className="select-icon" />
@@ -208,59 +170,49 @@ export function NewSimulation() {
           </div>
         </div>
 
-        {/* Market context */}
         <div className="form-field">
           <label className="form-label" htmlFor="marketContext">
-            Market / Regulatory Context{" "}
-            <span className="form-optional">(optional)</span>
+            {t("marketContext")} <span className="form-optional">({t("optional")})</span>
           </label>
           <input
             id="marketContext"
             name="marketContext"
             type="text"
             className="form-input"
-            placeholder="e.g. Malaysia, BNM-licensed e-wallet, Tier 2 KYC users only"
+            placeholder={t("marketPlaceholder")}
             value={form.marketContext}
             onChange={handleChange}
             disabled={isRunning}
           />
         </div>
 
-        {/* Additional notes */}
         <div className="form-field">
           <label className="form-label" htmlFor="additionalNotes">
-            Additional Context{" "}
-            <span className="form-optional">(optional)</span>
+            {t("additionalContext")} <span className="form-optional">({t("optional")})</span>
           </label>
           <textarea
             id="additionalNotes"
             name="additionalNotes"
             className="form-textarea"
             rows={3}
-            placeholder="Business justification, constraints, or specific risk areas to focus on..."
+            placeholder={t("additionalPlaceholder")}
             value={form.additionalNotes}
             onChange={handleChange}
             disabled={isRunning}
           />
         </div>
 
-        {/* Submit row */}
         <div className="form-actions">
           <button
             type="submit"
             className={`btn btn--primary ${!isReady ? "btn--disabled" : ""} ${isRunning ? "btn--loading" : ""}`}
             disabled={!isReady}
           >
-            {isRunning ? LOADING_MESSAGES[loadingStep] : "Run Risk Simulation"}
+            {isRunning ? t(LOADING_KEYS[loadingStep]) : t("runRiskSimulation")}
           </button>
-          {!isRunning && (
-            <p className="form-action-hint">
-              Simulation completes in seconds. No API key required.
-            </p>
-          )}
+          {!isRunning && <p className="form-action-hint">{t("simulationHint")}</p>}
         </div>
 
-        {/* Error */}
         {error && <p className="form-error">{error}</p>}
       </form>
     </div>
