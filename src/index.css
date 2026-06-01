@@ -2436,3 +2436,183 @@ body,
     min-width: 620px;
   }
 }
+
+/* ─── Ethan V2: full language controls + softer light mode ─────────────── */
+
+:root[data-theme="light"] {
+  --bg-base:       #d9dee7;
+  --bg-surface:    #e8ecf3;
+  --bg-raised:     #eef1f6;
+  --bg-overlay:    #d0d7e2;
+  --bg-hover:      #c7d0dc;
+
+  --border:        #aeb8c7;
+  --border-light:  #8794a7;
+
+  --amber:         #b7791f;
+  --amber-dim:     #8a5a13;
+  --amber-bg:      #f0dfbd;
+
+  --red:           #b91c1c;
+  --red-dim:       #8f1d1d;
+  --red-bg:        #efd1d1;
+
+  --cyan:          #087c8f;
+  --cyan-dim:      #0d6675;
+  --cyan-bg:       #cce5ec;
+
+  --green:         #047857;
+  --green-dim:     #065f46;
+  --green-bg:      #cde8dc;
+
+  --orange:        #c05621;
+  --orange-dim:    #9a3412;
+
+  --text-primary:  #172033;
+  --text-secondary:#485568;
+  --text-muted:    #69778b;
+  --text-accent:   #8a5a13;
+}
+
+:root[data-theme="light"] body {
+  background: var(--bg-base);
+}
+
+:root[data-theme="light"] .sidebar,
+:root[data-theme="light"] .metric-card,
+:root[data-theme="light"] .rating-banner,
+:root[data-theme="light"] .stakeholder-card,
+:root[data-theme="light"] .capability-card,
+:root[data-theme="light"] .scenario-card,
+:root[data-theme="light"] .compliance-item,
+:root[data-theme="light"] .risk-bullet-list,
+:root[data-theme="light"] .framework-step,
+:root[data-theme="light"] .dimension-card,
+:root[data-theme="light"] .disclaimer-box,
+:root[data-theme="light"] .details-toggle-card {
+  box-shadow: 0 10px 28px rgba(51, 65, 85, 0.08);
+}
+
+:root[data-theme="light"] .btn--primary {
+  background: #c88a2b;
+  border-color: #b7791f;
+  color: #111827;
+}
+
+:root[data-theme="light"] .btn--primary:hover {
+  background: #b7791f;
+}
+
+:root[data-theme="light"] .cell--critical { background: #e9c7c7; }
+:root[data-theme="light"] .cell--high { background: #ead9b7; }
+:root[data-theme="light"] .cell--medium { background: #ecd9c8; }
+:root[data-theme="light"] .cell--low { background: #e4e9f1; }
+
+.app-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-bottom: 18px;
+  position: sticky;
+  top: 0;
+  z-index: 9;
+  padding: 4px 0;
+  background: linear-gradient(180deg, var(--bg-base) 68%, rgba(10, 12, 16, 0));
+}
+
+:root[data-theme="light"] .app-toolbar {
+  background: linear-gradient(180deg, var(--bg-base) 68%, rgba(217, 222, 231, 0));
+}
+
+.toolbar-select-label,
+.theme-toggle-btn {
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+}
+
+.toolbar-label-text {
+  color: var(--text-muted);
+}
+
+.toolbar-select {
+  appearance: none;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  cursor: pointer;
+}
+
+.toolbar-select option {
+  background: var(--bg-surface);
+  color: var(--text-primary);
+}
+
+.details-toggle-section {
+  margin-bottom: 28px;
+}
+
+.details-toggle-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 18px 20px;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+}
+
+.details-toggle-hint {
+  font-size: 0.83rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin-top: 4px;
+}
+
+.details-panel {
+  animation: detailsFadeIn 0.18s ease-out;
+}
+
+@keyframes detailsFadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 720px) {
+  .app-toolbar {
+    position: static;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    margin-bottom: 18px;
+  }
+
+  .toolbar-select-label,
+  .theme-toggle-btn {
+    flex: 1;
+    min-width: 145px;
+    justify-content: center;
+  }
+
+  .details-toggle-card {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .details-toggle-card .btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
