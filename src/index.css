@@ -2053,3 +2053,386 @@ canvas {
     min-width: 580px;
   }
 }
+
+
+/* ─── Ethan Upgrade: Language / Theme / Cleaner Presentation ───────────── */
+
+:root[data-theme="light"] {
+  --bg-base:       #f6f8fb;
+  --bg-surface:    #ffffff;
+  --bg-raised:     #f8fafc;
+  --bg-overlay:    #eef2f7;
+  --bg-hover:      #e8edf5;
+
+  --border:        #d8e0ec;
+  --border-light:  #bac7d8;
+
+  --amber-bg:      #fff7e6;
+  --red-bg:        #fff1f1;
+  --cyan-bg:       #eafaff;
+  --green-bg:      #ecfdf5;
+
+  --text-primary:  #111827;
+  --text-secondary:#475569;
+  --text-muted:    #718096;
+  --text-accent:   #b45309;
+}
+
+:root[data-theme="light"] body {
+  background: var(--bg-base);
+  color: var(--text-primary);
+}
+
+:root[data-theme="light"] .btn--primary {
+  color: #111827;
+}
+
+:root[data-theme="light"] .badge--medium {
+  background: #fff7ed;
+}
+
+:root[data-theme="light"] .cell--critical { background: #fff1f1; }
+:root[data-theme="light"] .cell--high { background: #fff7e6; }
+:root[data-theme="light"] .cell--medium { background: #fff7ed; }
+:root[data-theme="light"] .cell--low { background: #f8fafc; }
+
+.app-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-bottom: 18px;
+  position: sticky;
+  top: 0;
+  z-index: 9;
+  padding: 4px 0;
+  background: linear-gradient(180deg, var(--bg-base) 65%, rgba(10, 12, 16, 0));
+}
+
+:root[data-theme="light"] .app-toolbar {
+  background: linear-gradient(180deg, var(--bg-base) 65%, rgba(246, 248, 251, 0));
+}
+
+.language-switcher,
+.theme-toggle {
+  min-height: 34px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface);
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+}
+
+.language-switcher select {
+  appearance: none;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  cursor: pointer;
+}
+
+.language-switcher option {
+  background: var(--bg-surface);
+  color: var(--text-primary);
+}
+
+.theme-toggle:hover,
+.language-switcher:hover {
+  background: var(--bg-hover);
+  color: var(--text-primary);
+  border-color: var(--border-light);
+}
+
+.show-more-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  background: linear-gradient(135deg, var(--bg-surface), var(--bg-raised));
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 18px 20px;
+  margin: -10px 0 42px;
+}
+
+.show-more-title {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  color: var(--amber);
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.show-more-copy {
+  font-size: 0.83rem;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+.show-more-btn {
+  flex-shrink: 0;
+}
+
+.details-panel {
+  animation: detailsFadeIn 0.18s ease-out;
+}
+
+@keyframes detailsFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.details-panel .dashboard-section {
+  margin-bottom: 42px;
+}
+
+/* Make the main dashboard presentation less crowded */
+.page-dashboard .metric-row {
+  margin-bottom: 28px;
+}
+
+.page-dashboard .dashboard-section {
+  margin-bottom: 38px;
+}
+
+.page-dashboard .rating-banner {
+  margin-bottom: 34px;
+}
+
+/* Stronger responsive layout for phone presentation */
+html,
+body,
+#root {
+  width: 100%;
+  min-height: 100%;
+  overflow-x: hidden;
+}
+
+.app-shell,
+.main-content,
+.page-dashboard,
+.page-home,
+.page-history,
+.page-method,
+.page-simulate {
+  max-width: 100%;
+}
+
+.matrix-wrapper,
+.table-wrapper {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.matrix-wrapper .risk-matrix-table {
+  min-width: 680px;
+}
+
+@media (max-width: 980px) {
+  .metric-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .dimension-grid,
+  .dimension-grid--6,
+  .framework-steps {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .control-plan-table {
+    overflow-x: auto;
+  }
+
+  .control-plan-header,
+  .control-plan-row {
+    min-width: 720px;
+  }
+
+  .history-table {
+    overflow-x: auto;
+  }
+
+  .history-table-header,
+  .history-row {
+    min-width: 680px;
+  }
+}
+
+@media (max-width: 768px) {
+  .app-shell {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .sidebar {
+    position: sticky;
+    top: 0;
+    width: 100%;
+    height: auto;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    z-index: 20;
+  }
+
+  .sidebar-brand {
+    padding: 14px 14px 10px;
+  }
+
+  .nav-section-label,
+  .sidebar-footer {
+    display: none;
+  }
+
+  .sidebar-nav {
+    flex-direction: row;
+    overflow-x: auto;
+    padding: 8px 10px 10px;
+    gap: 8px;
+  }
+
+  .nav-item {
+    flex-shrink: 0;
+    white-space: nowrap;
+    padding: 8px 10px;
+  }
+
+  .main-content {
+    margin-left: 0;
+    width: 100%;
+    max-width: 100%;
+    padding: 14px;
+    overflow-x: hidden;
+  }
+
+  .app-toolbar {
+    position: static;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    margin-bottom: 18px;
+  }
+
+  .page-header,
+  .dashboard-topbar,
+  .home-hero,
+  .rating-banner,
+  .section-row,
+  .form-actions,
+  .recent-item,
+  .show-more-panel {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .dashboard-topbar-right {
+    justify-content: flex-start;
+    width: 100%;
+  }
+
+  .metric-row,
+  .capability-grid,
+  .scenario-grid,
+  .stakeholder-grid,
+  .concern-row,
+  .risk-lists-row,
+  .form-row,
+  .dimension-grid,
+  .dimension-grid--6,
+  .framework-steps {
+    grid-template-columns: 1fr !important;
+  }
+
+  .page-title {
+    font-size: 1.45rem;
+  }
+
+  .page-subtitle,
+  .rating-banner-decision,
+  .concern-text,
+  .method-body {
+    max-width: 100%;
+  }
+
+  .btn,
+  .home-hero .btn,
+  .form-actions .btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .language-switcher,
+  .theme-toggle {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .show-more-btn {
+    width: 100%;
+  }
+
+  .alternative-box,
+  .rating-banner,
+  .home-hero {
+    padding: 20px;
+  }
+
+  .loading-steps {
+    width: 100%;
+  }
+
+  .scoring-row {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  html {
+    font-size: 14px;
+  }
+
+  .main-content {
+    padding: 12px;
+  }
+
+  .metric-card,
+  .scenario-card,
+  .stakeholder-card,
+  .capability-card,
+  .concern-card,
+  .compliance-item,
+  .risk-bullet-list,
+  .disclaimer-box,
+  .framework-step,
+  .dimension-card {
+    padding: 14px;
+  }
+
+  .page-header {
+    margin-bottom: 26px;
+  }
+
+  .dashboard-section {
+    margin-bottom: 30px;
+  }
+
+  .matrix-wrapper .risk-matrix-table {
+    min-width: 620px;
+  }
+}
