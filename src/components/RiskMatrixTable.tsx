@@ -69,7 +69,7 @@ export function RiskMatrixTable({ entries }: RiskMatrixTableProps) {
                 return (
                   <td key={imp} className={`matrix-cell ${cellRisk(lh, imp)}`}>
                     {names.map((n) => (
-                      <span key={n} className="matrix-risk-name">
+                      <span key={n} className="matrix-risk-name" title={n}>
                         {n}
                       </span>
                     ))}
