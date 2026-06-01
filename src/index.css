@@ -1694,3 +1694,362 @@ ul { list-style: none; }
     grid-template-columns: 1fr;
   }
 }
+
+
+/* ─────────────────────────────────────────────────────────────
+   MOBILE RESPONSIVE PATCH
+   Added for phone layout: sidebar becomes top nav, content stacks,
+   tables scroll horizontally, and fixed desktop widths stop clipping.
+   ───────────────────────────────────────────────────────────── */
+
+html,
+body,
+#root {
+  width: 100%;
+  min-height: 100%;
+  overflow-x: hidden;
+}
+
+img,
+svg,
+video,
+canvas {
+  max-width: 100%;
+}
+
+.app-shell,
+.main-content,
+.page-dashboard,
+.page-home,
+.page-history,
+.page-method,
+.page-simulate,
+.dashboard-section,
+.home-section,
+.rating-banner,
+.concern-row,
+.metric-row,
+.scenario-grid,
+.stakeholder-grid,
+.capability-grid,
+.dimension-grid,
+.framework-steps,
+.risk-lists-row {
+  max-width: 100%;
+}
+
+/* Make all wide table-like blocks scroll instead of breaking phone width */
+.matrix-wrapper,
+.control-plan-table,
+.history-table,
+.scoring-table {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Keep matrix readable on mobile by allowing horizontal scroll */
+.risk-matrix-table {
+  min-width: 620px;
+}
+
+/* Tablet */
+@media (max-width: 900px) {
+  .main-content {
+    padding: 28px 28px;
+  }
+
+  .metric-row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .dimension-grid,
+  .dimension-grid--6 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .framework-steps {
+    grid-template-columns: 1fr;
+  }
+
+  .control-plan-header {
+    min-width: 720px;
+  }
+
+  .control-plan-row {
+    min-width: 720px;
+  }
+
+  .history-table-header,
+  .history-row {
+    min-width: 680px;
+  }
+
+  .scoring-row {
+    min-width: 600px;
+  }
+}
+
+/* Phone */
+@media (max-width: 720px) {
+  :root {
+    --sidebar-w: 100%;
+  }
+
+  html {
+    font-size: 14px;
+  }
+
+  body {
+    overflow-x: hidden;
+  }
+
+  .app-shell {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    width: 100%;
+  }
+
+  .sidebar {
+    position: sticky;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: auto;
+    max-height: none;
+    z-index: 50;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .sidebar-brand {
+    padding: 14px 16px 10px;
+    border-bottom: none;
+  }
+
+  .brand-icon {
+    width: 28px;
+    height: 28px;
+  }
+
+  .brand-name {
+    font-size: 0.82rem;
+  }
+
+  .brand-sub {
+    font-size: 0.62rem;
+  }
+
+  .nav-section-label {
+    display: none;
+  }
+
+  .sidebar-nav {
+    flex-direction: row;
+    gap: 8px;
+    padding: 8px 12px 12px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: thin;
+    flex: none;
+  }
+
+  .nav-item {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    padding: 8px 11px;
+    font-size: 0.78rem;
+  }
+
+  .sidebar-footer {
+    display: none;
+  }
+
+  .main-content {
+    margin-left: 0;
+    width: 100%;
+    max-width: 100%;
+    padding: 20px 16px 44px;
+    overflow-x: hidden;
+  }
+
+  .page-dashboard,
+  .page-home,
+  .page-history,
+  .page-method,
+  .page-simulate {
+    width: 100%;
+    max-width: 100%;
+    padding-bottom: 56px;
+  }
+
+  .page-header {
+    flex-direction: column;
+    gap: 14px;
+    margin-bottom: 26px;
+  }
+
+  .page-header-actions,
+  .page-header-actions .btn {
+    width: 100%;
+  }
+
+  .page-title {
+    font-size: 1.45rem;
+  }
+
+  .page-subtitle {
+    max-width: 100%;
+    font-size: 0.86rem;
+  }
+
+  .home-hero {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 22px 18px;
+    margin-bottom: 34px;
+  }
+
+  .home-hero-tagline {
+    max-width: 100%;
+  }
+
+  .capability-grid,
+  .metric-row,
+  .concern-row,
+  .risk-lists-row,
+  .stakeholder-grid,
+  .dimension-grid,
+  .dimension-grid--6,
+  .form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .scenario-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .rating-banner {
+    padding: 20px 18px;
+    margin-bottom: 30px;
+  }
+
+  .dashboard-topbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .dashboard-topbar-right {
+    justify-content: flex-start;
+    width: 100%;
+  }
+
+  .dashboard-topbar-right .btn,
+  .form-actions .btn,
+  .btn--loading {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .form-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .example-prompts {
+    padding: 13px 14px;
+  }
+
+  .example-chip {
+    width: 100%;
+  }
+
+  .alternative-box {
+    padding: 20px 18px;
+  }
+
+  .alternative-header {
+    gap: 10px;
+  }
+
+  .section-row {
+    align-items: flex-start;
+    gap: 10px;
+    flex-direction: column;
+  }
+
+  .section-title::after {
+    display: none;
+  }
+
+  .recent-item {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .risk-badge {
+    white-space: nowrap;
+  }
+
+  .internal-score-note {
+    flex-wrap: wrap;
+  }
+
+  /* Disable hover expansion on touch screens to avoid weird cell jumps */
+  .matrix-cell:hover .matrix-risk-name {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    background: transparent;
+    padding: 1px 0;
+  }
+}
+
+/* Small phone */
+@media (max-width: 480px) {
+  .main-content {
+    padding: 16px 12px 40px;
+  }
+
+  .page-title {
+    font-size: 1.28rem;
+  }
+
+  .metric-card,
+  .scenario-card,
+  .stakeholder-card,
+  .capability-card,
+  .dimension-card,
+  .framework-step,
+  .compliance-item,
+  .risk-bullet-list {
+    padding: 14px;
+  }
+
+  .rating-banner,
+  .concern-card,
+  .alternative-box,
+  .disclaimer-box {
+    padding: 16px;
+  }
+
+  .metric-value {
+    font-size: 1.28rem;
+  }
+
+  .loading-state,
+  .empty-state {
+    padding: 48px 16px;
+  }
+
+  .loading-steps {
+    width: 100%;
+  }
+
+  .risk-matrix-table {
+    min-width: 580px;
+  }
+}
