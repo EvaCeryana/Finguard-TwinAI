@@ -1,4 +1,5 @@
 import type { RiskMatrixEntry, LikelihoodLevel, ImpactLevel } from "../types/risk";
+import { useLanguage } from "../context/LanguageContext";
 
 interface RiskMatrixTableProps {
   entries: RiskMatrixEntry[];
@@ -7,21 +8,6 @@ interface RiskMatrixTableProps {
 const LIKELIHOOD_LABELS: LikelihoodLevel[] = ["very_high", "high", "medium", "low"];
 const IMPACT_LABELS: ImpactLevel[] = ["low", "medium", "high", "critical"];
 
-const LIKELIHOOD_DISPLAY: Record<LikelihoodLevel, string> = {
-  very_high: "Very High",
-  high: "High",
-  medium: "Medium",
-  low: "Low",
-};
-
-const IMPACT_DISPLAY: Record<ImpactLevel, string> = {
-  critical: "Critical",
-  high: "High",
-  medium: "Medium",
-  low: "Low",
-};
-
-// Derive cell risk level from likelihood + impact
 function cellRisk(likelihood: LikelihoodLevel, impact: ImpactLevel): string {
   const lScore = { very_high: 4, high: 3, medium: 2, low: 1 }[likelihood];
   const iScore = { critical: 4, high: 3, medium: 2, low: 1 }[impact];
@@ -32,9 +18,15 @@ function cellRisk(likelihood: LikelihoodLevel, impact: ImpactLevel): string {
   return "cell--low";
 }
 
+function labelKey(value: string) {
+  if (value === "very_high") return "veryHigh";
+  return value;
+}
+
 export function RiskMatrixTable({ entries }: RiskMatrixTableProps) {
-  // Map entries into a lookup: likelihood + impact → names[]
+  const { t, tx } = useLanguage();
   const lookup: Record<string, string[]> = {};
+
   for (const entry of entries) {
     const key = `${entry.likelihood}:${entry.impact}`;
     if (!lookup[key]) lookup[key] = [];
@@ -43,34 +35,34 @@ export function RiskMatrixTable({ entries }: RiskMatrixTableProps) {
 
   return (
     <div className="matrix-wrapper">
-      <div className="matrix-y-label">LIKELIHOOD →</div>
+      <div className="matrix-y-label">{t("likelihood")} →</div>
       <table className="risk-matrix-table">
         <thead>
           <tr>
             <th className="matrix-corner">
-              <span>Likelihood</span>
+              <span>{t("likelihood")}</span>
               <span className="corner-slash">/</span>
-              <span>Impact</span>
+              <span>{t("impact")}</span>
             </th>
-            {IMPACT_LABELS.map((imp) => (
-              <th key={imp} className="matrix-col-head">
-                {IMPACT_DISPLAY[imp]}
+            {IMPACT_LABELS.map((impact) => (
+              <th key={impact} className="matrix-col-head">
+                {t(labelKey(impact))}
               </th>
             ))}
           </tr>
         </thead>
         <tbody>
-          {LIKELIHOOD_LABELS.map((lh) => (
-            <tr key={lh}>
-              <td className="matrix-row-head">{LIKELIHOOD_DISPLAY[lh]}</td>
-              {IMPACT_LABELS.map((imp) => {
-                const key = `${lh}:${imp}`;
+          {LIKELIHOOD_LABELS.map((likelihood) => (
+            <tr key={likelihood}>
+              <td className="matrix-row-head">{t(labelKey(likelihood))}</td>
+              {IMPACT_LABELS.map((impact) => {
+                const key = `${likelihood}:${impact}`;
                 const names = lookup[key] ?? [];
                 return (
-                  <td key={imp} className={`matrix-cell ${cellRisk(lh, imp)}`}>
-                    {names.map((n) => (
-                      <span key={n} className="matrix-risk-name" title={n}>
-                        {n}
+                  <td key={impact} className={`matrix-cell ${cellRisk(likelihood, impact)}`}>
+                    {names.map((name) => (
+                      <span key={name} className="matrix-risk-name" title={name}>
+                        {tx(name)}
                       </span>
                     ))}
                   </td>
