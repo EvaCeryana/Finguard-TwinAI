@@ -3,55 +3,44 @@
 /* ─── Design Tokens ─────────────────────────────────────────────────────── */
 
 :root {
-  /* Surface */
   --bg-base:       #0a0c10;
   --bg-surface:    #0e1117;
   --bg-raised:     #141820;
   --bg-overlay:    #1a2030;
   --bg-hover:      #1e2535;
 
-  /* Borders */
   --border:        #1f2a3a;
   --border-light:  #2a3548;
 
-  /* Brand accent — amber/gold for risk */
   --amber:         #f59e0b;
   --amber-dim:     #92600a;
   --amber-bg:      #1a1200;
 
-  /* Danger */
   --red:           #ef4444;
   --red-dim:       #7f1d1d;
   --red-bg:        #140a0a;
 
-  /* Safe / controls */
   --cyan:          #22d3ee;
   --cyan-dim:      #164e63;
   --cyan-bg:       #071520;
 
-  /* Success */
   --green:         #10b981;
   --green-dim:     #064e3b;
   --green-bg:      #061a10;
 
-  /* Neutral */
   --orange:        #fb923c;
   --orange-dim:    #7c2d12;
 
-  /* Text */
   --text-primary:  #e8edf5;
   --text-secondary:#8899b0;
   --text-muted:    #4a5a70;
   --text-accent:   #f59e0b;
 
-  /* Sidebar */
   --sidebar-w:     220px;
 
-  /* Fonts */
   --font-ui:       'DM Sans', sans-serif;
   --font-mono:     'IBM Plex Mono', monospace;
 
-  /* Radius */
   --radius-sm:     4px;
   --radius:        8px;
   --radius-lg:     12px;
@@ -87,7 +76,6 @@ ul { list-style: none; }
   flex: 1;
   margin-left: var(--sidebar-w);
   padding: 40px 48px;
-  /* Task 3: cap content width and prevent right-side overflow */
   max-width: calc(100vw - var(--sidebar-w));
   width: calc(100vw - var(--sidebar-w));
   overflow-x: hidden;
@@ -149,7 +137,6 @@ ul { list-style: none; }
   font-size: 0.7rem;
   color: var(--text-muted);
   letter-spacing: 0.06em;
-  /* Task 3: "Twin AI" — preserve mixed-case, no forced uppercase */
   text-transform: none;
 }
 
@@ -417,7 +404,6 @@ ul { list-style: none; }
 .matrix-wrapper {
   overflow-x: auto;
   margin-top: 8px;
-  /* Task 3: prevent matrix from overflowing container */
   max-width: 100%;
 }
 
@@ -433,7 +419,6 @@ ul { list-style: none; }
   width: 100%;
   border-collapse: collapse;
   font-size: 0.78rem;
-  /* Task 3: table layout fixed so cells don't expand past bounds */
   table-layout: fixed;
 }
 
@@ -464,7 +449,6 @@ ul { list-style: none; }
 }
 
 .matrix-cell {
-  /* Task 3: fixed width, compact height, text truncates with ellipsis */
   width: auto;
   min-height: 48px;
   border: 1px solid var(--border);
@@ -479,7 +463,6 @@ ul { list-style: none; }
   font-size: 0.68rem;
   line-height: 1.35;
   padding: 1px 0;
-  /* Task 3: clip long names — no wrapping explosions */
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -502,7 +485,6 @@ ul { list-style: none; }
 
 .scenario-grid {
   display: grid;
-  /* Task 3: reduced minmax so cards wrap cleanly at smaller widths */
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   gap: 16px;
   margin-top: 12px;
@@ -1485,7 +1467,6 @@ ul { list-style: none; }
 ::-webkit-scrollbar-thumb { background: var(--border-light); border-radius: 3px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--text-muted); }
 
-/* ─── Task 2 Additions ──────────────────────────────────────────────────── */
 
 /* Loading button state */
 .btn--loading {
@@ -1510,7 +1491,6 @@ ul { list-style: none; }
   display: flex;
   align-items: center;
   gap: 12px;
-  /* Task 3: prevent topbar right items from wrapping off-screen */
   flex-shrink: 0;
   flex-wrap: wrap;
   justify-content: flex-end;
@@ -1543,7 +1523,6 @@ ul { list-style: none; }
   padding: 4px 10px;
 }
 
-/* Internal model score note under badge */
 .internal-score-note {
   display: flex;
   align-items: center;
@@ -1554,7 +1533,6 @@ ul { list-style: none; }
   margin-top: 8px;
 }
 
-/* Main Concern + Launch Recommendation row */
 .concern-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -1577,7 +1555,6 @@ ul { list-style: none; }
   border-color: var(--cyan-dim);
 }
 
-/* Task 3: Critical rating gets stronger red recommendation card */
 .concern-card--launch-critical {
   background: var(--red-bg);
   border-color: var(--red-dim);
@@ -1604,12 +1581,10 @@ ul { list-style: none; }
   color: var(--text-secondary);
 }
 
-/* Six-column dimension grid */
 .dimension-grid--6 {
   grid-template-columns: repeat(3, 1fr);
 }
 
-/* Scoring formula box */
 .scoring-formula-box {
   background: var(--bg-surface);
   border: 1px solid var(--border);
@@ -1644,7 +1619,6 @@ ul { list-style: none; }
 
 /* ─── Task 3 Additions ──────────────────────────────────────────────────── */
 
-/* Ensure no page content bleeds past the content column */
 .page-dashboard,
 .page-home,
 .page-history,
@@ -1653,12 +1627,9 @@ ul { list-style: none; }
   max-width: 1040px;
 }
 
-/* Topbar: never let Export button get clipped on the right */
 .dashboard-topbar {
-  /* wrap is safe: back-link left, actions right */
   flex-wrap: wrap;
   gap: 12px;
-  /* ensure topbar doesn't exceed available width */
   max-width: 100%;
   overflow: hidden;
 }
@@ -1670,7 +1641,6 @@ ul { list-style: none; }
   }
 }
 
-/* Risk matrix cells: allow hover tooltip via title attribute to show full name */
 .matrix-cell:hover .matrix-risk-name {
   white-space: normal;
   overflow: visible;
@@ -1682,7 +1652,6 @@ ul { list-style: none; }
   padding: 2px 4px;
 }
 
-/* Rating banner: stack on narrow */
 @media (max-width: 720px) {
   .rating-banner {
     flex-direction: column;
@@ -1695,12 +1664,6 @@ ul { list-style: none; }
   }
 }
 
-
-/* ─────────────────────────────────────────────────────────────
-   MOBILE RESPONSIVE PATCH
-   Added for phone layout: sidebar becomes top nav, content stacks,
-   tables scroll horizontally, and fixed desktop widths stop clipping.
-   ───────────────────────────────────────────────────────────── */
 
 html,
 body,
@@ -1738,7 +1701,6 @@ canvas {
   max-width: 100%;
 }
 
-/* Make all wide table-like blocks scroll instead of breaking phone width */
 .matrix-wrapper,
 .control-plan-table,
 .history-table,
@@ -1749,7 +1711,6 @@ canvas {
   -webkit-overflow-scrolling: touch;
 }
 
-/* Keep matrix readable on mobile by allowing horizontal scroll */
 .risk-matrix-table {
   min-width: 620px;
 }
@@ -1998,7 +1959,6 @@ canvas {
     flex-wrap: wrap;
   }
 
-  /* Disable hover expansion on touch screens to avoid weird cell jumps */
   .matrix-cell:hover .matrix-risk-name {
     white-space: nowrap;
     overflow: hidden;
@@ -2055,7 +2015,6 @@ canvas {
 }
 
 
-/* ─── Ethan Upgrade: Language / Theme / Cleaner Presentation ───────────── */
 
 :root[data-theme="light"] {
   --bg-base:       #f6f8fb;
@@ -2201,7 +2160,6 @@ canvas {
   margin-bottom: 42px;
 }
 
-/* Make the main dashboard presentation less crowded */
 .page-dashboard .metric-row {
   margin-bottom: 28px;
 }
@@ -2214,7 +2172,6 @@ canvas {
   margin-bottom: 34px;
 }
 
-/* Stronger responsive layout for phone presentation */
 html,
 body,
 #root {
@@ -2616,13 +2573,6 @@ body,
     justify-content: center;
   }
 }
-/* =========================================================
-   New Simulation Page Layout Fix
-   Added after existing styles so it overrides safely.
-   This matches NewSimulation.tsx class names:
-   page-new-simulation, demo-scenario-row, demo-scenario-chip,
-   simulation-form, form-grid, form-group.
-   ========================================================= */
 
 .page-new-simulation {
   width: 100%;
@@ -2664,7 +2614,6 @@ body,
   color: var(--amber);
 }
 
-/* Form container */
 .page-new-simulation .simulation-form {
   display: flex;
   flex-direction: column;
@@ -2672,14 +2621,12 @@ body,
   max-width: 760px;
 }
 
-/* Two-column dropdown row */
 .page-new-simulation .form-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
 }
 
-/* Field blocks */
 .page-new-simulation .form-group {
   display: flex;
   flex-direction: column;
