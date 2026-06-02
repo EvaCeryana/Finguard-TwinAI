@@ -18,7 +18,7 @@ import {
   normalizeToDisplayScore,
 } from "../utils/riskScoring";
 
-import { DEFAULT_CATEGORY_RULES } from "./fallbackRuleConfig";
+import { defaultCategoryRules } from "./fallbackRuleConfig";
 
 type DetectedSignals = {
   transferLimit: boolean;
@@ -569,7 +569,7 @@ function merchantOnboardingRisks(): RiskMatrixEntry[] {
 }
 
 function genericRisks(): RiskMatrixEntry[] {
-  return Object.values(DEFAULT_CATEGORY_RULES).map((rule) =>
+  return Object.values(defaultCategoryRules).map((rule) =>
     makeRisk(
       rule.id,
       rule.riskName,
@@ -586,12 +586,12 @@ function addMissingCategoryRisks(risks: RiskMatrixEntry[]): RiskMatrixEntry[] {
   const completedRisks = [...risks];
   const existingCategories = new Set(completedRisks.map((risk) => risk.category));
 
-  for (const category of Object.keys(DEFAULT_CATEGORY_RULES) as RiskCategory[]) {
+  for (const category of Object.keys(defaultCategoryRules) as RiskCategory[]) {
     if (existingCategories.has(category)) {
       continue;
     }
 
-    const rule = DEFAULT_CATEGORY_RULES[category];
+    const rule = defaultCategoryRules[category];
 
     completedRisks.push(
       makeRisk(
@@ -906,8 +906,7 @@ function buildFalsePositiveScenarios(
       {
         id: "fp-general-01",
         affectedSegment: "Legitimate users with unusual but valid behaviour",
-        trigger:
-          "New rules classify uncommon but valid behaviour as suspicious.",
+        trigger: "New rules classify uncommon but valid behaviour as suspicious.",
         userImpact:
           "Users may face unnecessary friction, delays, or additional verification.",
         severity: "medium",
@@ -915,10 +914,8 @@ function buildFalsePositiveScenarios(
       {
         id: "fp-general-02",
         affectedSegment: "Small business or high-activity users",
-        trigger:
-          "Higher activity volume is misread as fraud or policy abuse.",
-        userImpact:
-          "Important transactions or approvals may be delayed.",
+        trigger: "Higher activity volume is misread as fraud or policy abuse.",
+        userImpact: "Important transactions or approvals may be delayed.",
         severity: "medium",
       }
     );
