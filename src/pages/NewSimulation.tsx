@@ -1,12 +1,13 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Loader2, PlayCircle } from "lucide-react";
+
 import { PageHeader } from "../components/PageHeader";
+import { useLanguage } from "../context/LanguageContext";
 import { runRiskSimulation } from "../services/simulationService";
 import type { CompanyType, DecisionType, SimulationInput } from "../types/risk";
-import { useLanguage } from "../context/LanguageContext";
 
-type FormState = {
+type SimulationForm = {
   decisionText: string;
   decisionType: DecisionType;
   companyType: CompanyType;
@@ -14,7 +15,11 @@ type FormState = {
   additionalNotes: string;
 };
 
-const initialForm: FormState = {
+type DemoScenario = SimulationForm & {
+  label: string;
+};
+
+const emptyForm: SimulationForm = {
   decisionText: "",
   decisionType: "",
   companyType: "",
@@ -22,14 +27,7 @@ const initialForm: FormState = {
   additionalNotes: "",
 };
 
-const demoScenarios: Array<{
-  label: string;
-  decisionText: string;
-  decisionType: DecisionType;
-  companyType: CompanyType;
-  marketContext: string;
-  additionalNotes: string;
-}> = [
+const demoScenarios: DemoScenario[] = [
   {
     label: "Increase instant transfer limit for newly registered users from RM500 to RM5,000.",
     decisionText:
@@ -62,7 +60,7 @@ const demoScenarios: Array<{
   },
 ];
 
-const decisionTypes: DecisionType[] = [
+const decisionTypeOptions: DecisionType[] = [
   "Transfer Limit Change",
   "KYC Rule Modification",
   "New Product / Feature Launch",
@@ -74,7 +72,7 @@ const decisionTypes: DecisionType[] = [
   "Other",
 ];
 
-const companyTypes: CompanyType[] = [
+const companyTypeOptions: CompanyType[] = [
   "Digital Bank",
   "E-Wallet",
   "Payment Gateway",
@@ -85,28 +83,39 @@ const companyTypes: CompanyType[] = [
   "Other Fintech",
 ];
 
+function buildSimulationPayload(form: SimulationForm): SimulationInput {
+  return {
+    decisionText: form.decisionText.trim(),
+    decisionType: form.decisionType || "Other",
+    companyType: form.companyType || "Other Fintech",
+    marketContext: form.marketContext.trim(),
+    additionalNotes: form.additionalNotes.trim(),
+  };
+}
+
 export function NewSimulation() {
   const navigate = useNavigate();
   const { t } = useLanguage();
 
-  const [form, setForm] = useState<FormState>(initialForm);
+  const [form, setForm] = useState<SimulationForm>(emptyForm);
   const [isRunning, setIsRunning] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Only decision text is required.
-  // User does NOT need to select demo scenario / decision type / company type.
-  const canSubmit = useMemo(() => {
+  const canRunSimulation = useMemo(() => {
     return form.decisionText.trim().length >= 5;
   }, [form.decisionText]);
 
-  function updateField<K extends keyof FormState>(key: K, value: FormState[K]) {
-    setForm((current) => ({
-      ...current,
-      [key]: value,
+  function updateFormField<K extends keyof SimulationForm>(
+    field: K,
+    value: SimulationForm[K]
+  ) {
+    setForm((currentForm) => ({
+      ...currentForm,
+      [field]: value,
     }));
   }
 
-  function applyDemoScenario(scenario: (typeof demoScenarios)[number]) {
+  function useDemoScenario(scenario: DemoScenario) {
     setForm({
       decisionText: scenario.decisionText,
       decisionType: scenario.decisionType,
@@ -114,35 +123,28 @@ export function NewSimulation() {
       marketContext: scenario.marketContext,
       additionalNotes: scenario.additionalNotes,
     });
-    setError(null);
+
+    setErrorMessage(null);
   }
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  async function submitSimulation(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (!canSubmit || isRunning) return;
+    if (!canRunSimulation || isRunning) {
+      return;
+    }
 
     setIsRunning(true);
-    setError(null);
+    setErrorMessage(null);
 
     try {
-      const payload: SimulationInput = {
-        decisionText: form.decisionText.trim(),
-
-        // These two are optional for user.
-        // If user does not select, we still allow simulation.
-        decisionType: form.decisionType || "Other",
-        companyType: form.companyType || "Other Fintech",
-
-        marketContext: form.marketContext.trim(),
-        additionalNotes: form.additionalNotes.trim(),
-      };
+      const payload = buildSimulationPayload(form);
 
       await runRiskSimulation(payload);
       navigate("/dashboard");
-    } catch (err) {
-      console.error("Simulation failed:", err);
-      setError(t("simulationFailed") || "Simulation failed. Please try again.");
+    } catch (error) {
+      console.error("Simulation failed:", error);
+      setErrorMessage(t("simulationFailed") || "Simulation failed. Please try again.");
     } finally {
       setIsRunning(false);
     }
@@ -165,7 +167,7 @@ export function NewSimulation() {
               key={scenario.label}
               type="button"
               className="demo-scenario-chip"
-              onClick={() => applyDemoScenario(scenario)}
+              onClick={() => useDemoScenario(scenario)}
             >
               {scenario.label}
             </button>
@@ -173,7 +175,7 @@ export function NewSimulation() {
         </div>
       </section>
 
-      <form className="simulation-form" onSubmit={handleSubmit}>
+      <form className="simulation-form" onSubmit={submitSimulation}>
         <div className="form-group">
           <label htmlFor="decisionText">
             {t("decisionDescription")} <span className="required">*</span>
@@ -182,7 +184,9 @@ export function NewSimulation() {
           <textarea
             id="decisionText"
             value={form.decisionText}
-            onChange={(event) => updateField("decisionText", event.target.value)}
+            onChange={(event) =>
+              updateFormField("decisionText", event.target.value)
+            }
             placeholder={t("decisionPlaceholder")}
             rows={6}
             required
@@ -199,11 +203,12 @@ export function NewSimulation() {
               id="decisionType"
               value={form.decisionType}
               onChange={(event) =>
-                updateField("decisionType", event.target.value as DecisionType)
+                updateFormField("decisionType", event.target.value as DecisionType)
               }
             >
               <option value="">{t("selectType")}</option>
-              {decisionTypes.map((type) => (
+
+              {decisionTypeOptions.map((type) => (
                 <option key={type} value={type}>
                   {type}
                 </option>
@@ -218,11 +223,12 @@ export function NewSimulation() {
               id="companyType"
               value={form.companyType}
               onChange={(event) =>
-                updateField("companyType", event.target.value as CompanyType)
+                updateFormField("companyType", event.target.value as CompanyType)
               }
             >
               <option value="">{t("selectType")}</option>
-              {companyTypes.map((type) => (
+
+              {companyTypeOptions.map((type) => (
                 <option key={type} value={type}>
                   {type}
                 </option>
@@ -233,13 +239,16 @@ export function NewSimulation() {
 
         <div className="form-group">
           <label htmlFor="marketContext">
-            {t("marketContext")} <span className="optional">({t("optional")})</span>
+            {t("marketContext")}{" "}
+            <span className="optional">({t("optional")})</span>
           </label>
 
           <input
             id="marketContext"
             value={form.marketContext}
-            onChange={(event) => updateField("marketContext", event.target.value)}
+            onChange={(event) =>
+              updateFormField("marketContext", event.target.value)
+            }
             placeholder={t("marketPlaceholder")}
           />
         </div>
@@ -253,19 +262,21 @@ export function NewSimulation() {
           <textarea
             id="additionalNotes"
             value={form.additionalNotes}
-            onChange={(event) => updateField("additionalNotes", event.target.value)}
+            onChange={(event) =>
+              updateFormField("additionalNotes", event.target.value)
+            }
             placeholder={t("additionalPlaceholder")}
             rows={5}
           />
         </div>
 
-        {error && <p className="form-error">{error}</p>}
+        {errorMessage ? <p className="form-error">{errorMessage}</p> : null}
 
         <div className="form-actions">
           <button
             type="submit"
             className="btn btn--primary"
-            disabled={!canSubmit || isRunning}
+            disabled={!canRunSimulation || isRunning}
           >
             {isRunning ? (
               <>
@@ -281,7 +292,7 @@ export function NewSimulation() {
           </button>
 
           <p className="simulation-hint">
-            {canSubmit
+            {canRunSimulation
               ? "Ready to run. Decision type and company type are optional."
               : "Type at least 5 characters to run a simulation."}
           </p>
