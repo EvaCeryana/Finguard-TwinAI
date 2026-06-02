@@ -1,207 +1,330 @@
 import type { RiskAssessment } from "../types/risk";
 
-const LEVEL_LABEL: Record<string, string> = {
+const riskLevelText: Record<string, string> = {
   critical: "CRITICAL",
   high: "HIGH",
   medium: "MEDIUM",
   low: "LOW",
 };
 
-const LIKELIHOOD_LABEL: Record<string, string> = {
+const likelihoodText: Record<string, string> = {
   very_high: "Very High",
   high: "High",
   medium: "Medium",
   low: "Low",
 };
 
-const IMPACT_LABEL: Record<string, string> = {
+const impactText: Record<string, string> = {
   critical: "Critical",
   high: "High",
   medium: "Medium",
   low: "Low",
 };
 
-const PRIORITY_LABEL: Record<string, string> = {
+const priorityText: Record<string, string> = {
   immediate: "Immediate",
   short_term: "Short-term",
   ongoing: "Ongoing",
 };
 
-function hr(char = "─", len = 72): string {
-  return char.repeat(len);
+function divider(char = "-", length = 72) {
+  return char.repeat(length);
 }
 
-function section(title: string): string {
-  return `\n${hr()}\n  ${title.toUpperCase()}\n${hr()}\n`;
+function addSection(lines: string[], title: string) {
+  lines.push("");
+  lines.push(divider());
+  lines.push(title.toUpperCase());
+  lines.push(divider());
 }
 
-export function exportAssessmentReport(assessment: RiskAssessment): void {
-  const createdAt = new Date(assessment.createdAt).toLocaleString("en-MY", {
+function addBlank(lines: string[]) {
+  lines.push("");
+}
+
+function addNumberedLine(lines: string[], index: number, text: string) {
+  lines.push(`  ${String(index + 1).padStart(2, "0")}. ${text}`);
+}
+
+function getEngineLabel(engineUsed?: string) {
+  if (engineUsed === "gemini") {
+    return "Gemini AI";
+  }
+
+  if (engineUsed === "fallback") {
+    return "Fallback Rule Engine";
+  }
+
+  return "Not specified";
+}
+
+function getCreatedAtText(createdAt: string) {
+  return new Date(createdAt).toLocaleString("en-MY", {
     dateStyle: "long",
     timeStyle: "short",
   });
+}
 
-  const engineLabel =
-    assessment.engineUsed === "gemini"
-      ? "Gemini AI (gemini-2.5-flash-lite)"
-      : "Fallback Rule Engine";
+function shorten(text: string, maxLength: number) {
+  if (text.length <= maxLength) {
+    return text;
+  }
 
-  const lines: string[] = [];
+  return `${text.slice(0, maxLength - 1)}…`;
+}
 
-  // ── Header ──────────────────────────────────────────────────────────────
-  lines.push(hr("═"));
-  lines.push("  FINGUARD TWIN AI");
-  lines.push("  Risk Assessment Report");
-  lines.push(hr("═"));
-  lines.push("");
-  lines.push(`  Simulation ID   : ${assessment.id}`);
-  lines.push(`  Engine Used     : ${engineLabel}`);
-  lines.push(`  Generated At    : ${createdAt}`);
-  lines.push("");
+function downloadTextFile(filename: string, content: string) {
+  const blob = new Blob([content], {
+    type: "text/plain;charset=utf-8",
+  });
 
-  // ── Decision ────────────────────────────────────────────────────────────
-  lines.push(section("Decision Under Assessment"));
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+
+  link.href = url;
+  link.download = filename;
+  link.style.display = "none";
+
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+
+  URL.revokeObjectURL(url);
+}
+
+function buildReportFilename(assessment: RiskAssessment) {
+  const dateTag = new Date(assessment.createdAt).toISOString().slice(0, 10);
+  return `finguard-risk-report-${assessment.id}-${dateTag}.txt`;
+}
+
+function addReportHeader(lines: string[], assessment: RiskAssessment) {
+  lines.push(divider("="));
+  lines.push("FinGuard Twin AI");
+  lines.push("Risk Assessment Report");
+  lines.push(divider("="));
+  addBlank(lines);
+
+  lines.push(`Simulation ID : ${assessment.id}`);
+  lines.push(`Engine Used   : ${getEngineLabel(assessment.engineUsed)}`);
+  lines.push(`Generated At  : ${getCreatedAtText(assessment.createdAt)}`);
+}
+
+function addDecisionSection(lines: string[], assessment: RiskAssessment) {
+  addSection(lines, "Decision Under Assessment");
+
   lines.push("Decision Input:");
   lines.push(`  ${assessment.decisionInput}`);
-  lines.push("");
+  addBlank(lines);
+
   lines.push("Decision Summary:");
   lines.push(`  ${assessment.decisionSummary}`);
+}
 
-  // ── Overall Rating ──────────────────────────────────────────────────────
-  lines.push(section("Overall Risk Rating"));
-  lines.push(`  Final Risk Rating  : ${LEVEL_LABEL[assessment.overallRiskLevel]}`);
-  lines.push(`  Display Score      : ${assessment.overallRiskScore} / 100`);
+function addOverallRatingSection(lines: string[], assessment: RiskAssessment) {
+  addSection(lines, "Overall Risk Rating");
+
+  lines.push(
+    `  Final Risk Rating : ${riskLevelText[assessment.overallRiskLevel]}`
+  );
+  lines.push(`  Display Score     : ${assessment.overallRiskScore} / 100`);
+
   if (assessment.internalRiskScore !== undefined) {
-    lines.push(`  Internal Score     : ${assessment.internalRiskScore} / 125`);
+    lines.push(`  Internal Score    : ${assessment.internalRiskScore} / 125`);
   }
+
   if (assessment.mainConcern) {
-    lines.push("");
+    addBlank(lines);
     lines.push("Main Concern:");
     lines.push(`  ${assessment.mainConcern}`);
   }
+
   if (assessment.launchRecommendation) {
-    lines.push("");
+    addBlank(lines);
     lines.push("Launch Recommendation:");
     lines.push(`  ${assessment.launchRecommendation}`);
   }
+}
 
-  // ── Affected Stakeholders ────────────────────────────────────────────────
-  lines.push(section("Affected Stakeholders"));
-  assessment.affectedStakeholders.forEach((s, i) => {
-    lines.push(`  ${String(i + 1).padStart(2, "0")}. ${s.role}`);
-    lines.push(`      Impact : ${s.impact}`);
-    lines.push("");
+function addStakeholderSection(lines: string[], assessment: RiskAssessment) {
+  addSection(lines, "Affected Stakeholders");
+
+  assessment.affectedStakeholders.forEach((stakeholder, index) => {
+    addNumberedLine(lines, index, stakeholder.role);
+    lines.push(`      Impact: ${stakeholder.impact}`);
+    addBlank(lines);
   });
+}
 
-  // ── Risk Matrix ──────────────────────────────────────────────────────────
-  lines.push(section("Risk Matrix"));
-  const colW = [4, 34, 16, 12, 12, 10];
+function addRiskMatrixSection(lines: string[], assessment: RiskAssessment) {
+  addSection(lines, "Risk Matrix");
+
+  const columnWidth = [4, 34, 16, 12, 12, 10];
+
   const header = [
-    "#".padEnd(colW[0]),
-    "Risk Name".padEnd(colW[1]),
-    "Category".padEnd(colW[2]),
-    "Likelihood".padEnd(colW[3]),
-    "Impact".padEnd(colW[4]),
+    "#".padEnd(columnWidth[0]),
+    "Risk Name".padEnd(columnWidth[1]),
+    "Category".padEnd(columnWidth[2]),
+    "Likelihood".padEnd(columnWidth[3]),
+    "Impact".padEnd(columnWidth[4]),
     "Level",
   ].join("  ");
+
   lines.push(`  ${header}`);
-  lines.push(`  ${hr("-", 72)}`);
-  assessment.riskMatrix.forEach((r, i) => {
+  lines.push(`  ${divider("-", 72)}`);
+
+  assessment.riskMatrix.forEach((risk, index) => {
     const row = [
-      String(i + 1).padStart(2, "0").padEnd(colW[0]),
-      r.riskName.substring(0, 33).padEnd(colW[1]),
-      r.category.padEnd(colW[2]),
-      LIKELIHOOD_LABEL[r.likelihood].padEnd(colW[3]),
-      IMPACT_LABEL[r.impact].padEnd(colW[4]),
-      LEVEL_LABEL[r.riskLevel],
+      String(index + 1).padStart(2, "0").padEnd(columnWidth[0]),
+      shorten(risk.riskName, 33).padEnd(columnWidth[1]),
+      risk.category.padEnd(columnWidth[2]),
+      likelihoodText[risk.likelihood].padEnd(columnWidth[3]),
+      impactText[risk.impact].padEnd(columnWidth[4]),
+      riskLevelText[risk.riskLevel],
     ].join("  ");
+
     lines.push(`  ${row}`);
   });
+}
 
-  // ── Fraud Abuse Scenarios ────────────────────────────────────────────────
-  lines.push(section("Fraud Abuse Scenarios"));
-  assessment.abuseScenarios.forEach((s, i) => {
-    lines.push(`  [A${String(i + 1).padStart(2, "0")}] ${s.actor}  ·  Severity: ${LEVEL_LABEL[s.severity]}`);
-    lines.push(`  Method : ${s.method}`);
-    lines.push(`  Impact : ${s.impact}`);
-    lines.push("");
+function addAbuseScenarioSection(lines: string[], assessment: RiskAssessment) {
+  addSection(lines, "Fraud Abuse Scenarios");
+
+  assessment.abuseScenarios.forEach((scenario, index) => {
+    const scenarioCode = `A${String(index + 1).padStart(2, "0")}`;
+
+    lines.push(
+      `  [${scenarioCode}] ${scenario.actor} | Severity: ${
+        riskLevelText[scenario.severity]
+      }`
+    );
+    lines.push(`  Method: ${scenario.method}`);
+    lines.push(`  Impact: ${scenario.impact}`);
+    addBlank(lines);
   });
+}
 
-  // ── False Positive Scenarios ─────────────────────────────────────────────
-  lines.push(section("False Positive Impact"));
-  assessment.falsePositiveScenarios.forEach((s, i) => {
-    lines.push(`  [FP${String(i + 1).padStart(2, "0")}] ${s.affectedSegment}  ·  Severity: ${LEVEL_LABEL[s.severity]}`);
-    lines.push(`  Trigger     : ${s.trigger}`);
-    lines.push(`  User Impact : ${s.userImpact}`);
-    lines.push("");
+function addFalsePositiveSection(lines: string[], assessment: RiskAssessment) {
+  addSection(lines, "False Positive Impact");
+
+  assessment.falsePositiveScenarios.forEach((scenario, index) => {
+    const scenarioCode = `FP${String(index + 1).padStart(2, "0")}`;
+
+    lines.push(
+      `  [${scenarioCode}] ${scenario.affectedSegment} | Severity: ${
+        riskLevelText[scenario.severity]
+      }`
+    );
+    lines.push(`  Trigger: ${scenario.trigger}`);
+    lines.push(`  User Impact: ${scenario.userImpact}`);
+    addBlank(lines);
   });
+}
 
-  // ── Compliance Concerns ──────────────────────────────────────────────────
-  lines.push(section("Compliance Concerns"));
-  assessment.complianceConcerns.forEach((c, i) => {
-    lines.push(`  ${String(i + 1).padStart(2, "0")}. [${LEVEL_LABEL[c.severity]}] ${c.regulation}`);
-    lines.push(`     ${c.concern}`);
-    lines.push("");
+function addComplianceSection(lines: string[], assessment: RiskAssessment) {
+  addSection(lines, "Compliance Concerns");
+
+  assessment.complianceConcerns.forEach((concern, index) => {
+    addNumberedLine(
+      lines,
+      index,
+      `[${riskLevelText[concern.severity]}] ${concern.regulation}`
+    );
+    lines.push(`     ${concern.concern}`);
+    addBlank(lines);
   });
+}
 
-  // ── Operational Risks ────────────────────────────────────────────────────
-  lines.push(section("Operational Risks"));
-  assessment.operationalRisks.forEach((r, i) => {
-    lines.push(`  ${String(i + 1).padStart(2, "0")}. ${r}`);
+function addRiskListSection(
+  lines: string[],
+  title: string,
+  risks: string[]
+) {
+  addSection(lines, title);
+
+  risks.forEach((risk, index) => {
+    addNumberedLine(lines, index, risk);
   });
+}
 
-  // ── Reputation Risks ─────────────────────────────────────────────────────
-  lines.push(section("Reputation Risks"));
-  assessment.reputationRisks.forEach((r, i) => {
-    lines.push(`  ${String(i + 1).padStart(2, "0")}. ${r}`);
+function addControlPlanSection(lines: string[], assessment: RiskAssessment) {
+  addSection(lines, "Recommended Control Plan");
+
+  assessment.controlPlan.forEach((control, index) => {
+    const priority = priorityText[control.priority]?.toUpperCase();
+
+    addNumberedLine(
+      lines,
+      index,
+      `[${control.type.toUpperCase()}] Priority: ${priority}`
+    );
+    lines.push(`     ${control.control}`);
+    lines.push(`     Owner: ${control.owner}`);
+    addBlank(lines);
   });
+}
 
-  // ── Control Plan ─────────────────────────────────────────────────────────
-  lines.push(section("Recommended Control Plan"));
-  assessment.controlPlan.forEach((c, i) => {
-    lines.push(`  ${String(i + 1).padStart(2, "0")}. [${c.type.toUpperCase()}]  Priority: ${PRIORITY_LABEL[c.priority].toUpperCase()}`);
-    lines.push(`     ${c.control}`);
-    lines.push(`     Owner: ${c.owner}`);
-    lines.push("");
-  });
+function addSaferAlternativeSection(lines: string[], assessment: RiskAssessment) {
+  addSection(lines, "Safer Alternative Decision");
 
-  // ── Safer Alternative ─────────────────────────────────────────────────────
-  lines.push(section("Safer Alternative Decision"));
   lines.push(`  Title: ${assessment.saferAlternative.title}`);
-  lines.push("");
+  addBlank(lines);
+
   lines.push(`  ${assessment.saferAlternative.description}`);
-  lines.push("");
+  addBlank(lines);
+
   lines.push("  Key Changes:");
-  assessment.saferAlternative.keyChanges.forEach((k, i) => {
-    lines.push(`    ${String(i + 1).padStart(2, "0")}. ${k}`);
+
+  assessment.saferAlternative.keyChanges.forEach((change, index) => {
+    lines.push(`    ${String(index + 1).padStart(2, "0")}. ${change}`);
   });
+}
 
-  // ── Disclaimer ────────────────────────────────────────────────────────────
-  lines.push(section("Disclaimer"));
-  lines.push("  FinGuard Twin AI is a decision-support simulation tool. It does not process");
-  lines.push("  real customer financial data, does not make credit decisions, and does not");
-  lines.push("  replace legal, compliance, or professional risk review. Outputs are structured");
-  lines.push("  risk assessments intended to support — not replace — human compliance and");
-  lines.push("  fraud risk judgement.");
-  lines.push("");
-  lines.push(hr("═"));
-  lines.push("  End of Report");
-  lines.push(hr("═"));
+function addDisclaimer(lines: string[]) {
+  addSection(lines, "Disclaimer");
 
-  // ── Download ──────────────────────────────────────────────────────────────
-  const content = lines.join("\n");
-  const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
-  const url = URL.createObjectURL(blob);
+  lines.push(
+    "  FinGuard Twin AI is a decision-support simulation tool for demo and"
+  );
+  lines.push(
+    "  pre-launch discussion. It does not process real customer financial data,"
+  );
+  lines.push(
+    "  make credit decisions, or replace legal, compliance, and professional"
+  );
+  lines.push(
+    "  risk review. The report should be used as a structured starting point"
+  );
+  lines.push("  for human judgement.");
 
-  const dateTag = new Date(assessment.createdAt).toISOString().slice(0, 10);
-  const filename = `finguard-risk-report-${assessment.id}-${dateTag}.txt`;
+  addBlank(lines);
+  lines.push(divider("="));
+  lines.push("End of Report");
+  lines.push(divider("="));
+}
 
-  const anchor = document.createElement("a");
-  anchor.href = url;
-  anchor.download = filename;
-  anchor.style.display = "none";
-  document.body.appendChild(anchor);
-  anchor.click();
-  document.body.removeChild(anchor);
-  URL.revokeObjectURL(url);
+function buildReportContent(assessment: RiskAssessment) {
+  const lines: string[] = [];
+
+  addReportHeader(lines, assessment);
+  addDecisionSection(lines, assessment);
+  addOverallRatingSection(lines, assessment);
+  addStakeholderSection(lines, assessment);
+  addRiskMatrixSection(lines, assessment);
+  addAbuseScenarioSection(lines, assessment);
+  addFalsePositiveSection(lines, assessment);
+  addComplianceSection(lines, assessment);
+  addRiskListSection(lines, "Operational Risks", assessment.operationalRisks);
+  addRiskListSection(lines, "Reputation Risks", assessment.reputationRisks);
+  addControlPlanSection(lines, assessment);
+  addSaferAlternativeSection(lines, assessment);
+  addDisclaimer(lines);
+
+  return lines.join("\n");
+}
+
+export function exportAssessmentReport(assessment: RiskAssessment): void {
+  const content = buildReportContent(assessment);
+  const filename = buildReportFilename(assessment);
+
+  downloadTextFile(filename, content);
 }
