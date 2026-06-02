@@ -1,5 +1,3 @@
-// ─── Core Enums ────────────────────────────────────────────────────────────
-
 export type RiskLevel = "critical" | "high" | "medium" | "low";
 
 export type RiskCategory =
@@ -13,6 +11,8 @@ export type RiskCategory =
 export type LikelihoodLevel = "very_high" | "high" | "medium" | "low";
 export type ImpactLevel = "critical" | "high" | "medium" | "low";
 
+export type OutputLanguage = "en" | "zh" | "id" | "ms";
+
 export type DecisionType =
   | "Transfer Limit Change"
   | "KYC Rule Modification"
@@ -25,8 +25,6 @@ export type DecisionType =
   | "Other"
   | "";
 
-export type OutputLanguage = "en" | "zh" | "id" | "ms";
-
 export type CompanyType =
   | "Digital Bank"
   | "E-Wallet"
@@ -38,19 +36,21 @@ export type CompanyType =
   | "Other Fintech"
   | "";
 
-// ─── Simulation Input ──────────────────────────────────────────────────────
+export type ControlType = "preventive" | "detective" | "corrective";
 
-export interface SimulationInput {
+export type ControlPriority = "immediate" | "short_term" | "ongoing";
+
+export type EngineUsed = "fallback" | "gemini";
+
+export type SimulationInput = {
   decisionText: string;
   decisionType: DecisionType;
   companyType: CompanyType;
   marketContext?: string;
   additionalNotes?: string;
-}
+};
 
-// ─── Risk Matrix Cell ──────────────────────────────────────────────────────
-
-export interface RiskMatrixEntry {
+export type RiskMatrixEntry = {
   id: string;
   riskName: string;
   category: RiskCategory;
@@ -59,114 +59,87 @@ export interface RiskMatrixEntry {
   riskLevel: RiskLevel;
   mitigated: boolean;
 
-  // Leo engine scoring fields
-  probabilityScore?: number; // 1–5
-  impactScore?: number;      // 1–5
-  controlGapScore?: number;  // 1–5
-  severityScore?: number;    // probability × impact × controlGap
-}
+  probabilityScore?: number;
+  impactScore?: number;
+  controlGapScore?: number;
+  severityScore?: number;
+};
 
-// ─── Abuse Scenario ────────────────────────────────────────────────────────
-
-export interface AbuseScenario {
+export type AbuseScenario = {
   id: string;
   actor: string;
   method: string;
   impact: string;
   severity: RiskLevel;
-}
+};
 
-// ─── False Positive Scenario ───────────────────────────────────────────────
-
-export interface FalsePositiveScenario {
+export type FalsePositiveScenario = {
   id: string;
   affectedSegment: string;
   trigger: string;
   userImpact: string;
   severity: RiskLevel;
-}
+};
 
-// ─── Control Plan ──────────────────────────────────────────────────────────
-
-export interface ControlAction {
+export type ControlAction = {
   id: string;
   control: string;
-  type: "preventive" | "detective" | "corrective";
+  type: ControlType;
   owner: string;
-  priority: "immediate" | "short_term" | "ongoing";
-}
+  priority: ControlPriority;
+};
 
-// ─── Compliance ────────────────────────────────────────────────────────────
-
-export interface ComplianceConcern {
+export type ComplianceConcern = {
   id: string;
   regulation: string;
   concern: string;
   severity: RiskLevel;
-}
+};
 
-// ─── Stakeholder ───────────────────────────────────────────────────────────
-
-export interface AffectedStakeholder {
+export type AffectedStakeholder = {
   role: string;
   impact: string;
-}
+};
 
-// ─── Safer Alternative ─────────────────────────────────────────────────────
-
-export interface SaferAlternative {
+export type SaferAlternative = {
   title: string;
   description: string;
   keyChanges: string[];
-}
+};
 
-// ─── Main Risk Assessment ──────────────────────────────────────────────────
-
-export interface RiskAssessment {
+export type RiskAssessment = {
   id: string;
-  createdAt: string; // ISO date string
+  createdAt: string;
 
   decisionInput: string;
   decisionSummary: string;
 
-  // Dashboard display score
-  overallRiskScore: number; // 0–100
+  overallRiskScore: number;
   overallRiskLevel: RiskLevel;
 
-  // Leo internal engine fields
-  internalRiskScore?: number;         // 1–125
+  internalRiskScore?: number;
   mainConcern?: string;
   launchRecommendation?: string;
-  engineUsed?: "fallback" | "gemini";
+  engineUsed?: EngineUsed;
   outputLanguage?: OutputLanguage;
   recoveryNotes?: string[];
 
   affectedStakeholders: AffectedStakeholder[];
-
   riskMatrix: RiskMatrixEntry[];
-
   abuseScenarios: AbuseScenario[];
-
   falsePositiveScenarios: FalsePositiveScenario[];
-
   complianceConcerns: ComplianceConcern[];
-
   operationalRisks: string[];
-
   reputationRisks: string[];
-
   controlPlan: ControlAction[];
-
   saferAlternative: SaferAlternative;
-}
+};
 
-// ─── History List Item ─────────────────────────────────────────────────────
-
-export interface AssessmentSummary {
+export type AssessmentSummary = {
   id: string;
   createdAt: string;
   decisionInput: string;
   overallRiskLevel: RiskLevel;
   overallRiskScore: number;
   outputLanguage?: OutputLanguage;
-}
+};
