@@ -62,7 +62,6 @@ export function getRiskLevelFromDisplayScore(score: number): RiskLevel {
 }
 
 /**
- * Kai Task 2 scoring override:
  * - If any critical risk exists → Overall Critical
  * - If high risk count >= 3 → Overall High
  * - If high risk count >= 1 and display score >= 50 → Overall High
