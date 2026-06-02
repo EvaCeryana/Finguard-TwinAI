@@ -2616,3 +2616,191 @@ body,
     justify-content: center;
   }
 }
+/* =========================================================
+   New Simulation Page Layout Fix
+   Added after existing styles so it overrides safely.
+   This matches NewSimulation.tsx class names:
+   page-new-simulation, demo-scenario-row, demo-scenario-chip,
+   simulation-form, form-grid, form-group.
+   ========================================================= */
+
+.page-new-simulation {
+  width: 100%;
+  max-width: 1040px;
+  margin: 0 auto;
+  padding-bottom: 80px;
+}
+
+.page-new-simulation .dashboard-section {
+  margin-bottom: 34px;
+}
+
+/* Demo scenario buttons */
+.page-new-simulation .demo-scenario-row {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.page-new-simulation .demo-scenario-chip {
+  min-height: 52px;
+  padding: 11px 13px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-overlay);
+  color: var(--text-secondary);
+  font-family: var(--font-ui);
+  font-size: 0.78rem;
+  line-height: 1.45;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+
+.page-new-simulation .demo-scenario-chip:hover {
+  background: var(--bg-hover);
+  border-color: var(--amber-dim);
+  color: var(--amber);
+}
+
+/* Form container */
+.page-new-simulation .simulation-form {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+  max-width: 760px;
+}
+
+/* Two-column dropdown row */
+.page-new-simulation .form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+/* Field blocks */
+.page-new-simulation .form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.page-new-simulation .form-group label {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  color: var(--text-secondary);
+}
+
+.page-new-simulation .required {
+  color: var(--red);
+  margin-left: 3px;
+}
+
+.page-new-simulation .optional {
+  color: var(--text-muted);
+  font-size: 0.9em;
+}
+
+/* Inputs */
+.page-new-simulation .form-group input,
+.page-new-simulation .form-group textarea,
+.page-new-simulation .form-group select {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-surface);
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: 0.85rem;
+  line-height: 1.55;
+  padding: 10px 13px;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.15s, box-shadow 0.15s, background 0.15s;
+}
+
+.page-new-simulation .form-group textarea {
+  resize: vertical;
+  min-height: 96px;
+}
+
+.page-new-simulation .form-group select {
+  min-height: 42px;
+  cursor: pointer;
+}
+
+.page-new-simulation .form-group input:focus,
+.page-new-simulation .form-group textarea:focus,
+.page-new-simulation .form-group select:focus {
+  border-color: var(--amber-dim);
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.08);
+}
+
+.page-new-simulation .form-group input::placeholder,
+.page-new-simulation .form-group textarea::placeholder {
+  color: var(--text-muted);
+}
+
+/* Helper text */
+.page-new-simulation .form-hint,
+.page-new-simulation .simulation-hint {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+/* Button row */
+.page-new-simulation .form-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding-top: 4px;
+}
+
+.page-new-simulation .form-actions .btn {
+  min-width: 210px;
+}
+
+/* Keep the submit button readable when disabled */
+.page-new-simulation .btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Mobile and tablet */
+@media (max-width: 900px) {
+  .page-new-simulation .demo-scenario-row,
+  .page-new-simulation .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .page-new-simulation .simulation-form {
+    max-width: 100%;
+  }
+}
+
+@media (max-width: 720px) {
+  .page-new-simulation {
+    max-width: 100%;
+    padding-bottom: 56px;
+  }
+
+  .page-new-simulation .form-actions {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .page-new-simulation .form-actions .btn {
+    width: 100%;
+    min-width: 0;
+    justify-content: center;
+  }
+
+  .page-new-simulation .demo-scenario-chip {
+    width: 100%;
+  }
+}
