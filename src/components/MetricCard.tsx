@@ -1,23 +1,41 @@
-interface MetricCardProps {
+type MetricAccent = "amber" | "red" | "cyan" | "neutral";
+
+type MetricCardProps = {
   label: string;
   value: string | number;
   sub?: string;
-  accent?: "amber" | "red" | "cyan" | "neutral";
-}
+  accent?: MetricAccent;
+};
 
-const ACCENT_CLASSES: Record<string, string> = {
+const metricAccentClass: Record<MetricAccent, string> = {
   amber: "metric-card--amber",
   red: "metric-card--red",
   cyan: "metric-card--cyan",
   neutral: "metric-card--neutral",
 };
 
-export function MetricCard({ label, value, sub, accent = "neutral" }: MetricCardProps) {
+function getMetricAccentClass(accent: MetricAccent) {
+  return metricAccentClass[accent] ?? metricAccentClass.neutral;
+}
+
+export function MetricCard(props: MetricCardProps) {
+  const { label, value, sub, accent = "neutral" } = props;
+
+  const cardClassName = `metric-card ${getMetricAccentClass(accent)}`;
+
   return (
-    <div className={`metric-card ${ACCENT_CLASSES[accent]}`}>
+    <section className={cardClassName} aria-label={label}>
       <span className="metric-label">{label}</span>
-      <span className="metric-value">{value}</span>
-      {sub && <span className="metric-sub">{sub}</span>}
-    </div>
+
+      <span className="metric-value">
+        {value}
+      </span>
+
+      {sub ? (
+        <span className="metric-sub">
+          {sub}
+        </span>
+      ) : null}
+    </section>
   );
 }
