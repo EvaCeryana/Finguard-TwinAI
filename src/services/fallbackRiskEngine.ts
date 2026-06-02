@@ -20,25 +20,37 @@ import {
 
 import { DEFAULT_CATEGORY_RULES } from "./fallbackRuleConfig";
 
-// ─── Helpers ───────────────────────────────────────────────────────────────
-// Phase-1 maintainability refactor: shared fallback category defaults live in
-// fallbackRuleConfig.ts instead of being repeated inside the engine body.
+type DetectedSignals = {
+  transferLimit: boolean;
+  loanAutomation: boolean;
+  scamBlocking: boolean;
+  kycReduction: boolean;
+  withdrawal: boolean;
+  merchantOnboarding: boolean;
+  newUser: boolean;
+  highValue: boolean;
+  malaysiaContext: boolean;
+};
+
+type RiskPatternBuilder = (signals: DetectedSignals) => RiskMatrixEntry[];
+
+const defaultControlGapScore = 4;
 
 function createId(prefix: string): string {
-  return `${prefix}-${Date.now()}-${Math.random().toString(16).slice(2, 8)}`;
+  const randomPart = Math.random().toString(16).slice(2, 8);
+  return `${prefix}-${Date.now()}-${randomPart}`;
 }
 
 function normaliseText(input: SimulationInput): string {
-  return [
+  const inputParts = [
     input.decisionText,
     input.decisionType,
     input.companyType,
     input.marketContext,
     input.additionalNotes,
-  ]
-    .filter(Boolean)
-    .join(" ")
-    .toLowerCase();
+  ];
+
+  return inputParts.filter(Boolean).join(" ").toLowerCase();
 }
 
 function hasAny(text: string, keywords: string[]): boolean {
@@ -46,14 +58,16 @@ function hasAny(text: string, keywords: string[]): boolean {
 }
 
 function uniqueBy<T>(items: T[], getKey: (item: T) => string): T[] {
-  const seen = new Set<string>();
+  const seenKeys = new Set<string>();
 
   return items.filter((item) => {
     const key = getKey(item);
 
-    if (seen.has(key)) return false;
+    if (seenKeys.has(key)) {
+      return false;
+    }
 
-    seen.add(key);
+    seenKeys.add(key);
     return true;
   });
 }
@@ -65,7 +79,7 @@ function makeRisk(
   likelihood: RiskMatrixEntry["likelihood"],
   impact: RiskMatrixEntry["impact"],
   riskLevel: RiskMatrixEntry["riskLevel"],
-  controlGapScore = 4
+  controlGapScore = defaultControlGapScore
 ): RiskMatrixEntry {
   return {
     id,
@@ -79,21 +93,7 @@ function makeRisk(
   };
 }
 
-// ─── Signal Detection ──────────────────────────────────────────────────────
-
-interface RiskSignals {
-  transferLimit: boolean;
-  loanAutomation: boolean;
-  scamBlocking: boolean;
-  kycReduction: boolean;
-  withdrawal: boolean;
-  merchantOnboarding: boolean;
-  newUser: boolean;
-  highValue: boolean;
-  malaysiaContext: boolean;
-}
-
-function detectSignals(input: SimulationInput): RiskSignals {
+function detectSignals(input: SimulationInput): DetectedSignals {
   const text = normaliseText(input);
 
   const transferLimit =
@@ -238,9 +238,9 @@ function detectSignals(input: SimulationInput): RiskSignals {
   };
 }
 
-// ─── Risk Pattern Builders ─────────────────────────────────────────────────
+function transferLimitRisks(signals: DetectedSignals): RiskMatrixEntry[] {
+  const isNewHighValueUser = signals.newUser || signals.highValue;
 
-function transferLimitRisks(signals: RiskSignals): RiskMatrixEntry[] {
   return [
     makeRisk(
       "rm-transfer-01",
@@ -250,7 +250,7 @@ function transferLimitRisks(signals: RiskSignals): RiskMatrixEntry[] {
       "fraud",
       signals.newUser ? "very_high" : "high",
       signals.highValue ? "critical" : "high",
-      signals.newUser || signals.highValue ? "critical" : "high"
+      isNewHighValueUser ? "critical" : "high"
     ),
     makeRisk(
       "rm-transfer-02",
@@ -409,7 +409,7 @@ function scamBlockingRisks(): RiskMatrixEntry[] {
   ];
 }
 
-function kycReductionRisks(signals: RiskSignals): RiskMatrixEntry[] {
+function kycReductionRisks(signals: DetectedSignals): RiskMatrixEntry[] {
   return [
     makeRisk(
       "rm-kyc-01",
@@ -462,7 +462,7 @@ function kycReductionRisks(signals: RiskSignals): RiskMatrixEntry[] {
   ];
 }
 
-function withdrawalRisks(signals: RiskSignals): RiskMatrixEntry[] {
+function withdrawalRisks(signals: DetectedSignals): RiskMatrixEntry[] {
   return [
     makeRisk(
       "rm-withdraw-01",
@@ -569,128 +569,127 @@ function merchantOnboardingRisks(): RiskMatrixEntry[] {
 }
 
 function genericRisks(): RiskMatrixEntry[] {
-  return [
+  return Object.values(DEFAULT_CATEGORY_RULES).map((rule) =>
     makeRisk(
-      "rm-general-01",
-      "Fraud Exploitation of New Policy Gap",
-      "fraud",
-      "medium",
-      "high",
-      "high"
-    ),
-    makeRisk(
-      "rm-general-02",
-      "Compliance Review Gap",
-      "compliance",
-      "medium",
-      "high",
-      "high"
-    ),
-    makeRisk(
-      "rm-general-03",
-      "False Positive Friction for Legitimate Users",
-      "false_positive",
-      "medium",
-      "medium",
-      "medium"
-    ),
-    makeRisk(
-      "rm-general-04",
-      "User Harm from Incorrect or Delayed Outcome",
-      "user_harm",
-      "medium",
-      "high",
-      "high"
-    ),
-    makeRisk(
-      "rm-general-05",
-      "Operational Load Increase",
-      "operational",
-      "medium",
-      "medium",
-      "medium"
-    ),
-    makeRisk(
-      "rm-general-06",
-      "Reputation Exposure from Poor Rollout",
-      "reputation",
-      "low",
-      "high",
-      "medium"
-    ),
-  ];
+      rule.id,
+      rule.riskName,
+      rule.category,
+      rule.likelihood,
+      rule.impact,
+      rule.riskLevel,
+      rule.controlGapScore
+    )
+  );
 }
 
-function buildRiskMatrix(signals: RiskSignals): RiskMatrixEntry[] {
-  let risks: RiskMatrixEntry[] = [];
+function addMissingCategoryRisks(risks: RiskMatrixEntry[]): RiskMatrixEntry[] {
+  const completedRisks = [...risks];
+  const existingCategories = new Set(completedRisks.map((risk) => risk.category));
 
-  if (signals.transferLimit) risks = risks.concat(transferLimitRisks(signals));
-  if (signals.loanAutomation) risks = risks.concat(loanAutomationRisks());
-  if (signals.scamBlocking) risks = risks.concat(scamBlockingRisks());
-  if (signals.kycReduction) risks = risks.concat(kycReductionRisks(signals));
-  if (signals.withdrawal) risks = risks.concat(withdrawalRisks(signals));
-  if (signals.merchantOnboarding) risks = risks.concat(merchantOnboardingRisks());
+  for (const category of Object.keys(DEFAULT_CATEGORY_RULES) as RiskCategory[]) {
+    if (existingCategories.has(category)) {
+      continue;
+    }
 
-  if (risks.length === 0) risks = genericRisks();
+    const rule = DEFAULT_CATEGORY_RULES[category];
+
+    completedRisks.push(
+      makeRisk(
+        rule.id,
+        rule.riskName,
+        rule.category,
+        rule.likelihood,
+        rule.impact,
+        rule.riskLevel,
+        rule.controlGapScore
+      )
+    );
+  }
+
+  return completedRisks;
+}
+
+function buildRiskMatrix(signals: DetectedSignals): RiskMatrixEntry[] {
+  const builders: RiskPatternBuilder[] = [];
+
+  if (signals.transferLimit) {
+    builders.push(transferLimitRisks);
+  }
+
+  if (signals.loanAutomation) {
+    builders.push(() => loanAutomationRisks());
+  }
+
+  if (signals.scamBlocking) {
+    builders.push(() => scamBlockingRisks());
+  }
+
+  if (signals.kycReduction) {
+    builders.push(kycReductionRisks);
+  }
+
+  if (signals.withdrawal) {
+    builders.push(withdrawalRisks);
+  }
+
+  if (signals.merchantOnboarding) {
+    builders.push(() => merchantOnboardingRisks());
+  }
+
+  const matchedRisks = builders.flatMap((buildRisks) => buildRisks(signals));
+  const baseRisks = matchedRisks.length > 0 ? matchedRisks : genericRisks();
 
   const uniqueRisks = uniqueBy(
-    risks,
+    baseRisks,
     (risk) => `${risk.category}-${risk.riskName}`
   );
 
-  const categories = new Set(uniqueRisks.map((risk) => risk.category));
-
-  for (const category of Object.keys(DEFAULT_CATEGORY_RULES) as RiskCategory[]) {
-    if (!categories.has(category)) {
-      const rule = DEFAULT_CATEGORY_RULES[category];
-
-      uniqueRisks.push(
-        makeRisk(
-          rule.id,
-          rule.riskName,
-          rule.category,
-          rule.likelihood,
-          rule.impact,
-          rule.riskLevel,
-          rule.controlGapScore
-        )
-      );
-    }
-  }
-
-  return uniqueRisks.slice(0, 10);
+  return addMissingCategoryRisks(uniqueRisks).slice(0, 10);
 }
 
-// ─── Content Builders ──────────────────────────────────────────────────────
-
-function buildDecisionSummary(signals: RiskSignals): string {
+function buildDecisionSummary(signals: DetectedSignals): string {
   const topics: string[] = [];
 
-  if (signals.transferLimit) topics.push("higher transfer exposure");
-  if (signals.loanAutomation) topics.push("automated credit decisioning");
-  if (signals.scamBlocking) topics.push("transaction blocking logic");
+  if (signals.transferLimit) {
+    topics.push("higher transfer exposure");
+  }
+
+  if (signals.loanAutomation) {
+    topics.push("automated credit decisioning");
+  }
+
+  if (signals.scamBlocking) {
+    topics.push("transaction blocking logic");
+  }
+
   if (signals.kycReduction) {
     topics.push("weaker identity or authentication controls");
   }
-  if (signals.withdrawal) topics.push("faster withdrawal or cash-out movement");
-  if (signals.merchantOnboarding) topics.push("merchant onboarding exposure");
+
+  if (signals.withdrawal) {
+    topics.push("faster withdrawal or cash-out movement");
+  }
+
+  if (signals.merchantOnboarding) {
+    topics.push("merchant onboarding exposure");
+  }
 
   if (topics.length === 0) {
-    return "The proposed fintech decision changes user, transaction, or platform risk exposure before launch. It should be tested against fraud, compliance, false positive, user harm, operational, and reputation risks before rollout.";
+    return "The proposed fintech decision changes user, transaction, or platform risk exposure before launch. It should be checked against fraud, compliance, false positive, user harm, operational, and reputation risks before rollout.";
   }
 
   return `The proposed decision introduces ${topics.join(
     ", "
-  )} before the platform has fully proven the related controls. This creates pre-launch exposure across fraud, compliance, user harm, operational workload, and customer trust.`;
+  )} before the related controls are fully proven. This creates pre-launch exposure across fraud, compliance, user harm, operational workload, and customer trust.`;
 }
 
-function buildMainConcern(signals: RiskSignals): string {
+function buildMainConcern(signals: DetectedSignals): string {
   if (signals.transferLimit && signals.kycReduction) {
-    return "Higher transaction exposure is being combined with weaker identity assurance, creating a strong mule-account and AML risk.";
+    return "Higher transaction exposure is being combined with weaker identity assurance, creating strong mule-account and AML risk.";
   }
 
   if (signals.loanAutomation) {
-    return "Automated approval may create unfair, unaffordable, or easily exploited lending outcomes without human review and explainability controls.";
+    return "Automated approval may create unfair, unaffordable, or easily exploited lending outcomes without human review and explanation controls.";
   }
 
   if (signals.scamBlocking) {
@@ -712,7 +711,7 @@ function buildMainConcern(signals: RiskSignals): string {
   return "The decision may increase risk exposure faster than the platform's current controls can safely manage.";
 }
 
-function buildStakeholders(signals: RiskSignals): AffectedStakeholder[] {
+function buildStakeholders(signals: DetectedSignals): AffectedStakeholder[] {
   const stakeholders: AffectedStakeholder[] = [
     {
       role: "End Users",
@@ -760,7 +759,7 @@ function buildStakeholders(signals: RiskSignals): AffectedStakeholder[] {
   return uniqueBy(stakeholders, (stakeholder) => stakeholder.role);
 }
 
-function buildAbuseScenarios(signals: RiskSignals): AbuseScenario[] {
+function buildAbuseScenarios(signals: DetectedSignals): AbuseScenario[] {
   const scenarios: AbuseScenario[] = [];
 
   if (signals.transferLimit || signals.kycReduction || signals.newUser) {
@@ -768,9 +767,9 @@ function buildAbuseScenarios(signals: RiskSignals): AbuseScenario[] {
       id: "as-mule-01",
       actor: "Mule Account Operator",
       method:
-        "Registers or acquires multiple accounts, then rapidly moves funds before the platform has enough behavioural history to detect coordinated abuse.",
+        "Registers or acquires multiple accounts, then rapidly moves funds before the platform has enough behaviour history to detect coordinated abuse.",
       impact:
-        "Stolen or scam-related funds can be layered through the platform quickly, increasing AML and fraud loss exposure.",
+        "Stolen or scam-related funds can move through the platform quickly, increasing AML and fraud loss exposure.",
       severity: signals.highValue || signals.kycReduction ? "critical" : "high",
     });
   }
@@ -782,7 +781,7 @@ function buildAbuseScenarios(signals: RiskSignals): AbuseScenario[] {
       method:
         "Compromises an account through phishing, credential stuffing, or SIM-swap, then uses faster transfer or withdrawal paths to remove funds.",
       impact:
-        "The recovery window shrinks and the user may suffer immediate financial loss.",
+        "The recovery window becomes shorter and the user may suffer immediate financial loss.",
       severity: "critical",
     });
   }
@@ -805,7 +804,8 @@ function buildAbuseScenarios(signals: RiskSignals): AbuseScenario[] {
       actor: "Scam Ring",
       method:
         "Splits payments, changes transaction wording, or rotates recipients to evade static blocking rules.",
-      impact: "Some scam payments continue while legitimate users may still be blocked.",
+      impact:
+        "Some scam payments may still continue while legitimate users may still be blocked.",
       severity: "high",
     });
   }
@@ -829,7 +829,8 @@ function buildAbuseScenarios(signals: RiskSignals): AbuseScenario[] {
         actor: "Opportunistic Fraudster",
         method:
           "Tests the new policy to find weaker checks, faster approval, or higher exposure limits.",
-        impact: "Fraud patterns may emerge after launch if monitoring is not prepared.",
+        impact:
+          "Fraud patterns may emerge after launch if monitoring is not prepared.",
         severity: "high",
       },
       {
@@ -837,7 +838,8 @@ function buildAbuseScenarios(signals: RiskSignals): AbuseScenario[] {
         actor: "Coordinated Abuse Group",
         method:
           "Uses multiple accounts, devices, or identities to exploit the new policy repeatedly.",
-        impact: "Small individual events can become a material portfolio-level loss.",
+        impact:
+          "Small individual events can become a material portfolio-level loss.",
         severity: "high",
       }
     );
@@ -847,7 +849,7 @@ function buildAbuseScenarios(signals: RiskSignals): AbuseScenario[] {
 }
 
 function buildFalsePositiveScenarios(
-  signals: RiskSignals
+  signals: DetectedSignals
 ): FalsePositiveScenario[] {
   const scenarios: FalsePositiveScenario[] = [];
 
@@ -879,8 +881,10 @@ function buildFalsePositiveScenarios(
     scenarios.push({
       id: "fp-block-01",
       affectedSegment: "Users making urgent family, medical, or business payments",
-      trigger: "Transaction wording, timing, new recipient, or amount resembles a scam pattern.",
-      userImpact: "Legitimate payment is blocked when the user needs it most.",
+      trigger:
+        "Transaction wording, timing, new recipient, or amount resembles a scam pattern.",
+      userImpact:
+        "Legitimate payment is blocked when the user needs it most.",
       severity: "high",
     });
   }
@@ -891,7 +895,8 @@ function buildFalsePositiveScenarios(
       affectedSegment: "Legitimate small merchants",
       trigger:
         "New business, low operating history, or unusual transaction category resembles fake merchant behaviour.",
-      userImpact: "Merchant onboarding is delayed, limiting business operations and trust.",
+      userImpact:
+        "Merchant onboarding is delayed, limiting business operations and trust.",
       severity: "medium",
     });
   }
@@ -901,7 +906,8 @@ function buildFalsePositiveScenarios(
       {
         id: "fp-general-01",
         affectedSegment: "Legitimate users with unusual but valid behaviour",
-        trigger: "New rules classify uncommon but valid behaviour as suspicious.",
+        trigger:
+          "New rules classify uncommon but valid behaviour as suspicious.",
         userImpact:
           "Users may face unnecessary friction, delays, or additional verification.",
         severity: "medium",
@@ -909,8 +915,10 @@ function buildFalsePositiveScenarios(
       {
         id: "fp-general-02",
         affectedSegment: "Small business or high-activity users",
-        trigger: "Higher activity volume is misread as fraud or policy abuse.",
-        userImpact: "Important transactions or approvals may be delayed.",
+        trigger:
+          "Higher activity volume is misread as fraud or policy abuse.",
+        userImpact:
+          "Important transactions or approvals may be delayed.",
         severity: "medium",
       }
     );
@@ -919,7 +927,7 @@ function buildFalsePositiveScenarios(
   return uniqueBy(scenarios, (scenario) => scenario.id).slice(0, 4);
 }
 
-function buildComplianceConcerns(signals: RiskSignals): ComplianceConcern[] {
+function buildComplianceConcerns(signals: DetectedSignals): ComplianceConcern[] {
   const concerns: ComplianceConcern[] = [];
 
   if (
@@ -988,15 +996,19 @@ function buildComplianceConcerns(signals: RiskSignals): ComplianceConcern[] {
   return uniqueBy(concerns, (concern) => concern.id).slice(0, 4);
 }
 
-function buildOperationalRisks(signals: RiskSignals): string[] {
+function buildOperationalRisks(signals: DetectedSignals): string[] {
   const risks = [
     "Monitoring dashboards, reason codes, and rollback thresholds must be ready before launch.",
     "Customer support needs clear scripts for delayed, blocked, rejected, or reviewed user actions.",
   ];
 
   if (signals.transferLimit || signals.withdrawal) {
-    risks.push("Fraud review queues may increase due to high-value money movement alerts.");
-    risks.push("Existing velocity rules may be miscalibrated for the new exposure level.");
+    risks.push(
+      "Fraud review queues may increase due to high-value money movement alerts."
+    );
+    risks.push(
+      "Existing velocity rules may be miscalibrated for the new exposure level."
+    );
   }
 
   if (signals.loanAutomation) {
@@ -1023,7 +1035,7 @@ function buildOperationalRisks(signals: RiskSignals): string[] {
   return uniqueBy(risks, (risk) => risk).slice(0, 5);
 }
 
-function buildReputationRisks(signals: RiskSignals): string[] {
+function buildReputationRisks(signals: DetectedSignals): string[] {
   const risks = [
     "Poorly explained controls may reduce customer trust in the platform.",
     "Unexpected fraud, unfair outcomes, or user friction may create negative social media attention.",
@@ -1036,7 +1048,9 @@ function buildReputationRisks(signals: RiskSignals): string[] {
   }
 
   if (signals.loanAutomation) {
-    risks.push("Users may accuse the platform of unfair or discriminatory AI decisioning.");
+    risks.push(
+      "Users may accuse the platform of unfair or discriminatory AI decisioning."
+    );
   }
 
   if (signals.scamBlocking) {
@@ -1054,7 +1068,7 @@ function buildReputationRisks(signals: RiskSignals): string[] {
   return uniqueBy(risks, (risk) => risk).slice(0, 5);
 }
 
-function buildControlPlan(signals: RiskSignals): ControlAction[] {
+function buildControlPlan(signals: DetectedSignals): ControlAction[] {
   const controls: ControlAction[] = [
     {
       id: "cp-core-01",
@@ -1083,23 +1097,24 @@ function buildControlPlan(signals: RiskSignals): ControlAction[] {
   ];
 
   if (signals.transferLimit || signals.withdrawal) {
-    controls.push({
-      id: "cp-money-01",
-      control:
-        "Use progressive limits based on account age, completed KYC, clean behaviour, and recipient trust.",
-      type: "preventive",
-      owner: "Product & Risk",
-      priority: "immediate",
-    });
-
-    controls.push({
-      id: "cp-money-02",
-      control:
-        "Require step-up authentication for high-value transfers, withdrawals, or new-recipient payments.",
-      type: "preventive",
-      owner: "Engineering",
-      priority: "immediate",
-    });
+    controls.push(
+      {
+        id: "cp-money-01",
+        control:
+          "Use progressive limits based on account age, completed KYC, clean behaviour, and recipient trust.",
+        type: "preventive",
+        owner: "Product & Risk",
+        priority: "immediate",
+      },
+      {
+        id: "cp-money-02",
+        control:
+          "Require step-up authentication for high-value transfers, withdrawals, or new-recipient payments.",
+        type: "preventive",
+        owner: "Engineering",
+        priority: "immediate",
+      }
+    );
   }
 
   if (signals.kycReduction) {
@@ -1114,23 +1129,24 @@ function buildControlPlan(signals: RiskSignals): ControlAction[] {
   }
 
   if (signals.loanAutomation) {
-    controls.push({
-      id: "cp-loan-01",
-      control:
-        "Keep human review for borderline, vulnerable-user, high-value, or unusual applications.",
-      type: "preventive",
-      owner: "Credit Risk",
-      priority: "immediate",
-    });
-
-    controls.push({
-      id: "cp-loan-02",
-      control:
-        "Monitor approval rate, default rate, appeal rate, and rejection rate by user segment.",
-      type: "detective",
-      owner: "Risk Analytics",
-      priority: "ongoing",
-    });
+    controls.push(
+      {
+        id: "cp-loan-01",
+        control:
+          "Keep human review for borderline, vulnerable-user, high-value, or unusual applications.",
+        type: "preventive",
+        owner: "Credit Risk",
+        priority: "immediate",
+      },
+      {
+        id: "cp-loan-02",
+        control:
+          "Monitor approval rate, default rate, appeal rate, and rejection rate by user segment.",
+        type: "detective",
+        owner: "Risk Analytics",
+        priority: "ongoing",
+      }
+    );
   }
 
   if (signals.scamBlocking) {
@@ -1168,7 +1184,7 @@ function buildControlPlan(signals: RiskSignals): ControlAction[] {
 }
 
 function buildSaferAlternative(
-  signals: RiskSignals
+  signals: DetectedSignals
 ): RiskAssessment["saferAlternative"] {
   if (signals.transferLimit || signals.withdrawal) {
     return {
@@ -1253,8 +1269,6 @@ function buildSaferAlternative(
   };
 }
 
-// ─── Assessment Builder ────────────────────────────────────────────────────
-
 function buildAssessment(input: SimulationInput): RiskAssessment {
   const signals = detectSignals(input);
 
@@ -1287,8 +1301,6 @@ function buildAssessment(input: SimulationInput): RiskAssessment {
     engineUsed: "fallback",
   };
 }
-
-// ─── Public API ─────────────────────────────────────────────────────────────
 
 export function runFallbackRiskEngine(input: SimulationInput): RiskAssessment {
   return buildAssessment(input);
