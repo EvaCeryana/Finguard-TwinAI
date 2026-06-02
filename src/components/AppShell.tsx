@@ -7,50 +7,51 @@ import {
   type AppLanguage,
 } from "../context/LanguageContext";
 
-const supportedLanguages: Array<{ code: AppLanguage; textKey: string }> = [
-  { code: "en", textKey: "english" },
-  { code: "zh", textKey: "chinese" },
-  { code: "id", textKey: "indonesia" },
-  { code: "ms", textKey: "malay" },
+const appLanguageList: Array<{ code: AppLanguage; nameKey: string }> = [
+  { code: "en", nameKey: "english" },
+  { code: "zh", nameKey: "chinese" },
+  { code: "id", nameKey: "indonesia" },
+  { code: "ms", nameKey: "malay" },
 ];
 
-function AppLayoutContent() {
+function AppLayoutBody() {
   const { language, setLanguage, theme, setTheme, t } = useLanguage();
 
-  const isDarkMode = theme === "dark";
+  const darkThemeActive = theme === "dark";
 
-  const handleLanguageChange = (
-    event: React.ChangeEvent<HTMLSelectElement>
-  ) => {
-    setLanguage(event.target.value as AppLanguage);
-  };
+  function updateSelectedLanguage(event: React.ChangeEvent<HTMLSelectElement>) {
+    const selectedLanguage = event.target.value as AppLanguage;
+    setLanguage(selectedLanguage);
+  }
 
-  const switchTheme = () => {
-    setTheme(isDarkMode ? "light" : "dark");
-  };
+  function updateThemeMode() {
+    if (darkThemeActive) {
+      setTheme("light");
+    } else {
+      setTheme("dark");
+    }
+  }
 
   return (
     <div className="app-shell">
       <Sidebar />
 
       <main className="main-content">
-        <div className="app-toolbar" aria-label="Application settings">
+        <div className="app-toolbar" aria-label="FinGuard display settings">
           <label className="toolbar-select-label">
             <Languages size={14} />
 
-            <span className="toolbar-label-text">
-              {t("language")}
-            </span>
+            <span className="toolbar-label-text">{t("language")}</span>
 
             <select
               className="toolbar-select"
               value={language}
-              onChange={handleLanguageChange}
+              onChange={updateSelectedLanguage}
               aria-label={t("language")}
             >
-              {supportedLanguages.map((item) => (
-                <option key={item.code} value={item.code}>
-                  {t(item.textKey)}
+              {appLanguageList.map((lang) => (
+                <option key={lang.code} value={lang.code}>
+                  {t(lang.nameKey)}
                 </option>
               ))}
             </select>
@@ -59,11 +60,11 @@ function AppLayoutContent() {
           <button
             type="button"
             className="btn btn--ghost btn--sm theme-toggle-btn"
-            onClick={switchTheme}
-            aria-label={isDarkMode ? t("lightMode") : t("darkMode")}
+            onClick={updateThemeMode}
+            aria-label={darkThemeActive ? t("lightMode") : t("darkMode")}
           >
-            {isDarkMode ? <Sun size={14} /> : <Moon size={14} />}
-            {isDarkMode ? t("lightMode") : t("darkMode")}
+            {darkThemeActive ? <Sun size={14} /> : <Moon size={14} />}
+            {darkThemeActive ? t("lightMode") : t("darkMode")}
           </button>
         </div>
 
@@ -76,7 +77,7 @@ function AppLayoutContent() {
 export function AppShell() {
   return (
     <LanguageProvider>
-      <AppLayoutContent />
+      <AppLayoutBody />
     </LanguageProvider>
   );
 }
